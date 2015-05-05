@@ -23,3 +23,16 @@
   position: 'absolute'; 
   border: 2px solid;
 }
+
+#blacksquare div {
+    float: left;
+    width: 45px;
+    height: 45px;
+    background-color: #000;
+}
+#whitesquare div {
+    float: left;
+    width: 45px;
+    height: 45px;
+    background-color: #fff;
+}
