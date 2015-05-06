@@ -4,7 +4,7 @@ SExp = {
         dot = false,
         i, j;
 
-    str: for(i = str.length; i--; )
+    str: for(i = str.length; i--; ) {
       switch(str.charCodeAt(i)) {
         /* Skip whitespace. */
         case     9: case    10: case    11: case    12: case    13:
@@ -59,10 +59,12 @@ SExp = {
           i = j;
           break;
       }
+    }
 
     if(stack.head === null ||
        stack.tail !== null ||
        stack.head.tail !== null)
+        print(str.substring(i-5,i+7));
       throw new SyntaxError("Invalid s-expression.");
 
     return stack.head.head;
