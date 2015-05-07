@@ -1,8 +1,8 @@
-SExp = {
+module.exports = {
   parse: function(str) {
     var stack = {head: null, tail: null},
         dot = false,
-        i, j;
+        i=0, j=0;
 
     str: for(i = str.length; i--; )
       switch(str.charCodeAt(i)) {
@@ -53,7 +53,6 @@ SExp = {
               }
               j--;
             stack.head = {head: str.slice(++j + 1, ++i - 1), tail: stack.head};
-              print(stack.head.head);
           } else {
 
               atom: for(j = i; j--; )

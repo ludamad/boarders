@@ -10,7 +10,7 @@ io = require('socket.io')(server)
 port = process.env.PORT || 8081
 
 C = require 'cli-color'
-require("./zrfparser")
+P = require("./zrfparser")
 
 SITE_NAME = "Boarders"
 VERSION_MAJOR = '0'
@@ -22,3 +22,4 @@ M.serverStart = () ->
 
     server.listen port, () ->
         print("Server listening at port #{C.green port}")
+    P.parse "tictactoe.zrf"
