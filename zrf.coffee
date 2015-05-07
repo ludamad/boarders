@@ -1,4 +1,5 @@
 assert = require('assert')
+clc = require('cli-color')
 
 ################################################################################
 # ZRF S-expression helpers:
@@ -11,6 +12,9 @@ s2l = (sexpr) ->
         l.push sexpr.head
         sexpr = sexpr.tail
     return l
+
+isArray = (obj) ->
+    return Object::toString.call(obj) == '[object Array]'
 
 # Convert an s-expression into a list of lists of expressions
 s2ll = (sexpr) -> [s2l(S) for S in s2l(sexpr)]
@@ -35,15 +39,15 @@ _parseField = (obj, field, type, value) ->
     member = field
 
     addData = (v) ->
-        obj[field] = v
+        obj[member] = v
     if typeof type == 'object'
         field = field.substring(0, field.length - 1)
         print "Truncating #{member} -> #{field} for #{type[0]}"
         type = type[0]
         addData = (v) ->
-            if not obj[field]?
-                obj[field] = []
-            obj[field].push(v)
+            if not obj[member]?
+                obj[member] = []
+            obj[member].push(v)
 
     ###################################################
     # Dispatch based on type field, whether it is an object, and whether it ends in '*'
@@ -79,19 +83,38 @@ _parseField = (obj, field, type, value) ->
 
 # Helper for succintly describing the shape of ZRF object model nodes:
 def = (name) -> (fields) ->
+    toString = (indent = 0) ->
+        t = ''
+        s = ''
+        for k in [0..indent]
+            t += '  '
+        s += "#{clc.blue name}\n"
+        for k in Object.keys(@)
+            if isArray(@[k])
+                s += "#{t} #{clc.red k}\n"
+                for v in @[k]
+                    s += "#{t}  #{clc.red '-'} #{v.toString(indent + 2)}\n"
+            else if typeof @[k] == 'object' and not @[k]._zObject?
+                s += "#{t} #{clc.green k} #{toString.call(@[k], indent + 1)}\n"
+            else if @[k]?
+                s += "#{t} #{clc.green k} #{@[k].toString(indent + 1)}\n"
+        return s
+
     Z[name] = class Base 
+        _zObject: true
         constructor: (list) ->
             fields._init?.call(@, list)
             for {head, tail} in list
                 value = s2l(tail)
                 parsed = false
-                for field of fields 
+                for field in Object.keys(fields)
                     if field.indexOf(head) == 0
                         _parseField(@, field, fields[field], value)
                         parsed = true
                         break
                 if not parsed
                     print "**NYI: #{name} #{head}"
+        toString: toString
 
 def('File') {
     version: 'string'
@@ -149,5 +172,8 @@ def('Game') {
 }
 
 module.exports = {
-    sexpToZrfObjModel: (S) -> new Z.File(s2l(S))
+    sexpToZrfObjModel: (S) -> 
+        model = new Z.File(s2l(S))
+        print model.toString()
+        return model
 }
