@@ -31,6 +31,7 @@
 
 /* board */
 .board-b72b1 {
+  position: 'center'; 
   border: 2px solid #404040;
   -webkit-box-sizing: content-box;
   -moz-box-sizing: content-box;
