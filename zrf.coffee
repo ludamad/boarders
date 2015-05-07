@@ -27,9 +27,6 @@ s2l = (sexpr) ->
         sexpr = sexpr.tail
     return l
 
-isArray = (obj) ->
-    return Object::toString.call(obj) == '[object Array]'
-
 # Convert an s-expression into a list of lists of expressions
 s2ll = (sexpr) -> [s2l(S) for S in s2l(sexpr)]
 
@@ -87,7 +84,7 @@ _parseField = (obj, field, type, value) ->
     # ZRF object:
     else if type.substring(type.length-1,type.length) != '*'
         addData new Z[type](value)
-    
+
     # List of ZRF objects:
     else
         type = type.substring(0, type.length - 1)
@@ -101,11 +98,11 @@ pprint = (V, indent = 0) ->
 
     if typeof V != 'object'
         return (if V? then V.toString() else clc.yellow 'null') + '\n'
-    else if isArray(V)
+    else if Array.isArray(V)
         s += "\n"
         for v in V
             s += "#{t}- #{pprint(v, indent + 2)}"
-    else 
+    else
         if V._classname?
             s += "#{clc.blue V._classname}\n"
         else
@@ -120,13 +117,13 @@ pprint = (V, indent = 0) ->
 ################################################################################'
 
 # Macro substitution for arguments eg $1, $2:
-replaceArguments = (S, replacements) -> 
+replaceArguments = (S, replacements) ->
     sexprVisitNamed S, (child) ->
         if replacements[child.head]?
             r = sexprCopy replacements[child.head]
             child.head = r
 
-replaceDefines = (S, defines) -> 
+replaceDefines = (S, defines) ->
     if not S? or typeof S != 'object'
         return
     if typeof S.head != 'object'
@@ -145,7 +142,7 @@ replaceDefines = (S, defines) ->
         replaceDefines(S.head, defines)
     replaceDefines(S.tail, defines)
 
-findAndReplaceDefines = (S) -> 
+findAndReplaceDefines = (S) ->
     # Defines should be top level:
     defines = []
     newNodes = []
@@ -164,7 +161,7 @@ findAndReplaceDefines = (S) ->
 
 # Helper for succintly describing the shape of ZRF object model nodes:
 def = (name) -> (fields) ->
-    Z[name] = class Base 
+    Z[name] = class Base
         _classname: name
         constructor: (list) ->
             fields._init?.call(@, list)
@@ -198,8 +195,8 @@ def('Directions') {
 
 def('Piece') {
     name: 'string', help: 'string'
-    image: (S) -> 
-        if not @images? 
+    image: (S) ->
+        if not @images?
             @images = {}
         for [player, file] in toPairs(S)
             @images[player] = file
@@ -242,7 +239,7 @@ def('Game') {
 }
 
 module.exports = {
-    sexpToZrfObjModel: (S) -> 
+    sexpToZrfObjModel: (S) ->
         nodes = findAndReplaceDefines(S)
         model = new Z.File(nodes)
         print pprint(model)
