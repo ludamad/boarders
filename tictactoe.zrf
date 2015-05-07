@@ -1,0 +1,867 @@
+; *** Tic-Tac-Toe
+; *** Copyright 1998-2002 Zillions Development
+; v.2.0
+
+; You need to purchase Zillions of Games to load this rules file
+; Visit the Zillions web site at http://www.zillions-of-games.com
+
+(version "2.0")
+
+(define add-to-empty  ((verify empty?) add) )
+(define step          ($1 (verify empty?) add) )
+
+(game
+   (title "Tic-Tac-Toe")
+   (description "One side takes X's and the other side takes O's.  Players alternate
+      placing their marks on open spots.  The object is to get three of
+	  your marks in a row horizontally, vertically, or diagonally.  If neither
+	  side accomplishes this, it's a cat's game (a draw).")
+   (history "Tic-Tac-Toe was an old adaptation of Three Men's Morris to situations
+      where there were no available pieces.  You can draw or carve marks
+	  and they are never moved.  It is played all over the world under various
+	  names, such as `Noughts and Crosses` in England.")
+   (strategy "With perfect play, Tic-Tac-Toe is a draw.  Against less than perfect
+      opponents it's an advantage to go first, as having an extra mark on the board
+	  never hurts your position.  The center is the key square as 4 possible wins
+	  go through it.  The corners are next best as 3 wins go through each of them.  The
+	  side squares are least valuable, as only 2 wins go through them.  Try to
+	  get in positions where you can `trap` your opponent by threatening two 3-in-a-rows
+	  simultaneously with a single move.  To be a good player, you must not only know
+	  how to draw as the second player, you must also be able to takes advantage of
+	  bad play.")
+   (option "animate drops" false)
+   (option "prevent flipping" 2)
+   (win-sound "Audio\\Congrats.wav")
+   (loss-sound "Audio\\YouLose.wav")
+   (players X O)
+   (turn-order X O)
+   (board
+        (image "images\TicTacToe\TTTbrd.bmp")
+        (grid
+            (start-rectangle 16 16 112 112) ; top-left position
+            (dimensions ;3x3
+                ("top-/middle-/bottom-" (0 112)) ; rows
+                ("left/middle/right" (112 0))) ; columns
+            (directions (n -1 0) (e 0 1) (nw -1 -1) (ne -1 1))
+        )
+   )
+   (piece
+        (name man)
+		(help "Man: drops on any empty square")
+		(image X "images\TicTacToe\TTTX.bmp"
+		       O "images\TicTacToe\TTTO.bmp")
+        (drops (add-to-empty))
+   )
+   (board-setup
+        (X (man off 5))
+        (O (man off 5))
+   )
+
+   (draw-condition (X O) stalemated)
+   (win-condition (X O)
+	  	(or (relative-config man n man n man)
+            (relative-config man e man e man)
+            (relative-config man ne man ne man)
+            (relative-config man nw man nw man)
+		)
+	)
+)
+
+(variant
+   (title "Losing Tic-Tac-Toe")
+   (description "This is the same as normal TicTacToe, except that the
+      object is NOT to get 3-in-a-row.\\
+	  One side takes X's and the other side takes O's.  Players alternate
+      placing their marks on open spots.  The object is to avoid getting three of
+	  your marks in a row horizontally, vertically, or diagonally.  If there are
+	  no 3-in-a-rows, it's a cat's game (a draw).")
+   (history "The `misere` version of Tic-Tac-Toe.  Martin Gardner uses the name
+      `toetacktick` for this game, a name supplied by one of his readers, Mike
+      Shodell.")
+   (strategy "The first player has a disadvantage, as he has to play carefully
+      in order to draw.  He does, however, have a drawing strategy by playing
+	  in the center, which is counter-intuitive at first.  Once he has done this
+	  he can symmetrically mirror his opponent to avoid getting 3-in-a-row.")
+   (option "animate drops" false)
+   (loss-condition (X O)
+        (or (relative-config man n man n man)
+            (relative-config man e man e man)
+            (relative-config man ne man ne man)
+            (relative-config man nw man nw man)
+        )
+   )
+)
+
+(variant (title "-"))  ;-----------------------------------------------------
+
+; *** 4x4 Tic-Tac-Toe
+(variant
+    (title "4x4 Tic-Tac-Toe")
+    (description "Tic-Tac-Toe adapted to a 4x4 grid.  One side takes Blue
+	  and the other side takes Red.  Players alternate dropping pieces on open
+        spots.  The object is to get four of your pieces in a row horizontally,
+        vertically, or diagonally.  If neither side accomplishes this, it's a
+        cat's game (a draw).")
+    (strategy "With perfect play, 4x4 Tic-Tac-Toe is a draw.")
+    (option "animate drops" false)
+    (drop-sound "Audio\\Phaser.wav")
+    (win-sound "Audio\\Weird.wav")
+    (loss-sound "Audio\\Weird.wav")
+    (players Blue Red)
+    (turn-order Blue Red)
+    (board
+        (image "images\TicTacToe\TTT4x4.bmp")
+        (grid
+            (start-rectangle 0 0 100 100) ; top-left position
+            (dimensions ;4x4
+                ("top-/uppermid-/lowermid-/bottom-" (0 100)) ; rows
+                ("left/midleft/midright/right" (100 0)) ; columns
+			)
+		)
+	)
+    (piece (name man))
+    (piece
+        (image Blue "images\TicTacToe\blueball.bmp"
+               Red "images\TicTacToe\redball.bmp")
+		(help "Man: drops on any empty square")
+        (name Ball)
+        (drops (add-to-empty))
+	)
+    (board-setup
+        (Blue (Ball off 99))
+        (Red (Ball off 99))
+	)
+    (win-condition (Blue Red)
+	    (or (absolute-config Ball (top-left top-midleft top-midright top-right))
+            (absolute-config Ball (uppermid-left uppermid-midleft uppermid-midright uppermid-right))
+            (absolute-config Ball (lowermid-left lowermid-midleft lowermid-midright lowermid-right))
+            (absolute-config Ball (bottom-left bottom-midleft bottom-midright bottom-right))
+            (absolute-config Ball (top-left uppermid-left lowermid-left bottom-left))
+			(absolute-config Ball (top-midleft uppermid-midleft lowermid-midleft bottom-midleft))
+			(absolute-config Ball (top-midright uppermid-midright lowermid-midright bottom-midright))
+			(absolute-config Ball (top-right uppermid-right lowermid-right bottom-right))
+            (absolute-config Ball (top-left uppermid-midleft lowermid-midright bottom-right))
+			(absolute-config Ball (top-right uppermid-midright lowermid-midleft bottom-left))
+	    )
+    )
+)
+
+; *** Losing 4x4 Tic-Tac-Toe
+(variant
+    (title "Losing 4x4 Tic-Tac-Toe")
+    (description "Like 4x4 Tic-Tac-Toe, but the object is NOT to get
+	  three in a row!\\
+	  One side takes Blue and the other side takes Red.  Players alternate
+        dropping their pieces on open spots.  The object is to avoid getting three of
+	  your pieces in a row horizontally, vertically, or diagonally.  If no
+	  3-in-a-rows were formed, it's a cat's game (a draw).")
+    (strategy "Try to avoid forming too many spots where you cannot play without
+        making three in a row, and when the opponent forms spots where he cannot
+        play, avoid playing in them as long as possible.")
+    (option "animate drops" false)
+    (drop-sound "Audio\\Phaser.wav")
+    (players Blue Red)
+    (turn-order Blue Red)
+    (board
+        (image "images\TicTacToe\TTT4x4.bmp")
+        (grid
+            (start-rectangle 0 0 100 100) ; top-left position
+            (dimensions ;4x4
+                ("top-/uppermid-/lowermid-/bottom-" (0 100)) ; rows
+                ("left/midleft/midright/right" (100 0)) ; columns
+			)
+			(directions (n -1 0) (e 0 1) (ne -1 1) (nw -1 -1))
+		)
+	) 
+    (piece (name man))
+    (piece
+        (image Blue "images\TicTacToe\blueball.bmp"
+               Red "images\TicTacToe\redball.bmp")
+	    (help "Ball: drops on any empty square")
+        (name Ball)
+        (drops (add-to-empty))
+	)
+    (board-setup
+        (Blue (Ball off 99))
+        (Red (Ball off 99))
+	)
+    (loss-condition (Blue Red)
+	  (or (relative-config Ball n Ball n Ball)
+            (relative-config Ball e Ball e Ball)
+            (relative-config Ball ne Ball ne Ball)
+            (relative-config Ball nw Ball nw Ball)
+	  )
+	)
+)
+
+(variant
+    (title "Felix and Rover (Felix first)")
+    (description "Like 4x4 Tic-Tac-Toe, but the object is for Felix (the cat) to prevent either
+        player from getting four in a row, and for Rover (the dog) to force either player to get
+        four in a row!\\
+	  In this version, Felix and goes first.  Players
+        alternate dropping their pieces on open spots.  If either player forms four in
+        a row, Rover wins; if no 4-in-a-rows are formed, it's a cat's game, and Felix
+        wins.")
+    (strategy "Felix: try to avoid placing three pieces in any line (creating spots
+        where you cannot play without losing), but block Rover when he plays two or
+        three in the same line.  A corner opening is very strong.   It is conjectured
+        that with best play, Felix can win if he goes first.\\
+        Rover: Use threats of making four in a row to try and force Felix to play
+        where he does not want to.  If Felix plays two or three in a line where
+        you have not played, try to avoid playing there as long as possible.")
+    (history "This game was described in a problem posed by David A. Silverman in
+        the `Journal of Recreational Mathematics` (volume 5, number 2) in April 1972.
+        Several readers analyzed the game, and the results were published in volume
+        9, number 1, in 1976.    Donald E. Knuth and James B. Haley Jr. independently
+        proved that Rover can force a win if he goes first; Haley also gave an informal
+        proof that Felix can also force a win if he goes first.   Knuth called the game
+        `the nicest tic-tac-toe game I've ever seen`.   The game had some popularity
+        in postal play in the NOST.")
+    (option "animate drops" false)
+    (players Felix Rover)
+    (turn-order Felix Rover)
+    (board
+        (image "images\TicTacToe\TTT4x4.bmp")
+        (grid
+            (start-rectangle 0 0 100 100) ; top-left position
+            (dimensions ;4x4
+                ("top-/uppermid-/lowermid-/bottom-" (0 100)) ; rows
+                ("left/midleft/midright/right" (100 0)) ; columns
+			)
+			(directions (n -1 0) (e 0 1) (ne -1 1) (nw -1 -1))
+		)
+	) 
+    (piece (name man))
+    (piece
+        (image Felix "images\TicTacToe\Felix1.bmp" "images\TicTacToe\Felix2.bmp"
+               Rover "images\TicTacToe\Rover1.bmp" "images\TicTacToe\Rover2.bmp")
+	    (help "Pet: drops on any empty square")
+        (name Pet)
+        (drops (add-to-empty))
+	)
+    (board-setup
+        (Felix (Pet off 99))
+        (Rover (Pet off 99))
+	)
+    (win-condition (Felix) stalemated)    
+    (win-condition (Rover)
+	  (or (relative-config Pet n Pet n Pet n Pet)
+            (relative-config Pet e Pet e Pet e Pet)
+            (relative-config Pet ne Pet ne Pet ne Pet)
+            (relative-config Pet nw Pet nw Pet nw Pet)
+	  )
+	)
+    (loss-condition (Felix)
+	  (or (relative-config Pet n Pet n Pet n Pet)
+            (relative-config Pet e Pet e Pet e Pet)
+            (relative-config Pet ne Pet ne Pet ne Pet)
+            (relative-config Pet nw Pet nw Pet nw Pet)
+	  )
+	)
+)
+
+(variant
+    (title "Felix and Rover (Rover first)")
+    (description "Like 4x4 Tic-Tac-Toe, but the object is for Felix (the cat) to prevent either
+        player from getting four in a row, and for Rover (the dog) to force either player to get
+        four in a row!\\
+	  In this version, Rover goes first.  Players
+        alternate dropping their pieces on open spots.  If either player forms four in
+        a row, Rover wins; if no 4-in-a-rows are formed, it's a cat's game, and Felix
+        wins.")
+    (strategy "Felix: try to avoid placing three pieces in any line (creating spots
+        where you cannot play without losing), but block Rover when he plays two or
+        three in the same line.\\
+        Rover: Use threats of making four in a row to try and force Felix to play
+        where he does not want to.  If Felix plays two or three in a line where
+        you have not played, try to avoid playing there as long as possible.
+        It has been proven that Rover can win with best play if he goes first.")
+    (history "This game was described in a problem posed by David A. Silverman in
+        the `Journal of Recreational Mathematics` (volume 5, number 2) in April 1972.
+        Several readers analyzed the game, and the results were published in volume
+        9, number 1, in 1976.  Donald E. Knuth and James B. Haley Jr. independently
+        proved that Rover can force a win if he goes first; Haley also gave an informal
+        proof that Felix can also force a win if he goes first.   Knuth called the game
+        `the nicest tic-tac-toe game I've ever seen`.   The game had some popularity
+        in postal play in the NOST.")
+    (option "animate drops" false)
+    (players Rover Felix)
+    (turn-order Rover Felix) 
+    (board
+        (image "images\TicTacToe\TTT4x4.bmp")
+        (grid
+            (start-rectangle 0 0 100 100) ; top-left position
+            (dimensions ;4x4
+                ("top-/uppermid-/lowermid-/bottom-" (0 100)) ; rows
+                ("left/midleft/midright/right" (100 0)) ; columns
+			)
+			(directions (n -1 0) (e 0 1) (ne -1 1) (nw -1 -1))
+		)
+	) 
+    (piece (name man))
+    (piece
+        (image Felix "images\TicTacToe\Felix1.bmp" "images\TicTacToe\Felix2.bmp"
+               Rover "images\TicTacToe\Rover1.bmp" "images\TicTacToe\Rover2.bmp")
+	    (help "Pet: drops on any empty square")
+        (name Pet)
+        (drops (add-to-empty))
+	)
+    (board-setup
+        (Rover (Pet off 99))
+        (Felix (Pet off 99))
+	)
+    (loss-condition (Rover) stalemated)
+    (win-condition (Rover)
+	  (or (relative-config Pet n Pet n Pet n Pet)
+            (relative-config Pet e Pet e Pet e Pet)
+            (relative-config Pet ne Pet ne Pet ne Pet)
+            (relative-config Pet nw Pet nw Pet nw Pet)
+	  )
+	)
+    (loss-condition (Felix)
+	  (or (relative-config Pet n Pet n Pet n Pet)
+            (relative-config Pet e Pet e Pet e Pet)
+            (relative-config Pet ne Pet ne Pet ne Pet)
+            (relative-config Pet nw Pet nw Pet nw Pet)
+	  )
+	)
+)
+
+
+
+(variant (title "-"))  ;-----------------------------------------------------
+
+; *** 5x5 TicTacToe
+(variant
+    (title "5x5 Tic-Tac-Toe")
+    (description "Tic-Tac-Toe adapted to a 5x5 grid.  One side takes the Red
+	  side and the other takes the Blue.  Players alternate
+      placing their balls on open spots.  The object is to get four of
+	  your balls in a row horizontally, vertically, or diagonally.  If neither
+	  side accomplishes this, it's a cat's game (a draw).")
+    (strategy "The game is a draw with best play, but as the starting player, you
+        can use the tactics of regular Tic-Tac-Toe by playing in the center 3x3
+        area (playing your first move in the center is a strong opening).")
+    (option "animate drops" false)
+    (players Blue Red)
+    (turn-order Blue Red)
+    (board
+        (image "images\TicTacToe\TTT5x5.bmp")
+        (grid
+            (start-rectangle 0 0 50 50)
+            (dimensions ;5x5
+                ("a/b/c/d/e" (50 0)) ; columns
+                ("5/4/3/2/1" (0 50)) ; rows
+			)
+			(directions (n 0 -1) (e 1 0) (ne 1 -1) (nw -1 -1))
+		)
+		
+	)
+    (piece (name man))
+    (piece
+		(image Blue "images\TicTacToe\bballs.bmp"
+		       Red "images\TicTacToe\rballs.bmp")
+        (name Ball)
+		(help "Ball: drops on any empty square")
+        (drops (add-to-empty))
+	)
+
+   (board-setup
+        (Blue (Ball off 99))
+        (Red (Ball off 99))
+   )
+
+   (win-condition (Blue Red)
+	  	(or (relative-config Ball n  Ball n  Ball n  Ball)
+            (relative-config Ball e  Ball e  Ball e  Ball)
+            (relative-config Ball ne Ball ne Ball ne Ball)
+            (relative-config Ball nw Ball nw Ball nw Ball)
+		)
+	)
+)
+
+(variant (title "-"))  ;-----------------------------------------------------
+
+(variant
+   (title "3D Tic-Tac-Toe")
+   (description "Object: Get four of your marks in a row horizontally, vertically, 
+          or diagonally.  One side takes Blue and the other side takes Red.  Players alternate
+          placing Balls on open intersections.  The Four-in-a-row can be formed along 
+	  any line.")
+   (history "The origin of 4x4x4 Tic-Tac-Toe is not known, but probably developed from
+        an earlier 3x3x3 version which is an easy win for the first player.   The 4x4x4
+        version has appeared commercially as Qubic.    In 1977, Owen Patashnik, a
+        computer scientist at Bell Labs, used 1500 hours of computer time to prove
+        that the first player can win with best play, but the analysis, which runs
+        2929 moves in all of its variants, is probably beyond the scope of humans to
+        memorize.")
+   (strategy "Block your opponent and look for dual 3-in-a-row threats.  The eight
+        corners and the four center points of the two middle layers are strong; grab
+        as many of these as you safely can in the opening.   Although the game is
+        theoretically a first-player win, in practice the game is not unbalanced and
+        the second player has reasonable winning chances.")
+   (option "animate drops" false)
+   (option "prevent flipping" true)
+   (win-sound "Audio\\Congrats.wav")
+   (loss-sound "Audio\\YouLose.wav")
+   (players Blue Red)
+   (turn-order Blue Red)
+   (board
+        (image "images\TicTacToe\Qubic.bmp")
+        (grid
+            (start-rectangle 4 4 31 31) ; top-left position
+            (dimensions ;4x4x4
+                ("I-/II-/III-/IV-" (0 80))
+                ("a/b/c/d" (58 0))
+				("1/2/3/4" (29 14))
+			)
+            (directions (n -1 0 0) (e 0 1 0) (nw -1 -1 0) (ne -1 1 0)
+        	            (up 0 0 1) (upn -1 0 1) (upe 0 1 1)  
+						(ups 1 0 1) (upw 0 -1 1) (upne -1 1 1)
+		                (upnw -1 -1 1) (upse 1 1 1) (upsw 1 -1 1)
+			)   
+		)
+   )
+   (piece (name man))
+   (piece
+        (name Ball)
+		(help "Ball: drops on any empty square")
+		(image Blue "images\TicTacToe\sbluball.bmp"
+		       Red "images\TicTacToe\sredball.bmp")
+        (drops (add-to-empty))
+   )
+   (board-setup
+        (Blue (Ball off 32))
+        (Red (Ball off 32))
+   )
+
+   (draw-condition (Blue Red) stalemated)
+   (win-condition (Blue Red)
+	  	(or (relative-config Ball n Ball n Ball n Ball)
+            (relative-config Ball e Ball e Ball e Ball)
+            (relative-config Ball ne Ball ne Ball ne Ball)
+            (relative-config Ball nw Ball nw Ball nw Ball)
+			(relative-config Ball up Ball up Ball up Ball)
+			(relative-config Ball upn Ball upn Ball upn Ball)
+			(relative-config Ball upe Ball upe Ball upe Ball)
+			(relative-config Ball upw Ball upw Ball upw Ball)
+			(relative-config Ball ups Ball ups Ball ups Ball)
+			(relative-config Ball upne Ball upne Ball upne Ball)
+			(relative-config Ball upnw Ball upnw Ball upnw Ball)
+			(relative-config Ball upse Ball upse Ball upse Ball)
+			(relative-config Ball upsw Ball upsw Ball upsw Ball)
+		)
+	)
+)
+
+(variant
+   (title "Losing 3D Tic-Tac-Toe")
+   (description "Object: Avoid getting four of your pieces in a row horizontally, 
+          vertically, or diagonally.  One side takes Blue and the other side takes Red.
+          Players alternate placing balls on open intersections. If neither side gets
+          four in a row, then it's a draw.  The Four-in-a-row can be formed along
+          any line.")
+   (strategy "Try not to put three of your pieces on the same line unless absolutely
+      necessary.   When the opponent does so, try to leave the fourth position open
+      as long as possible.")
+   (option "prevent flipping" true)
+   (win-sound "Audio\\Congrats.wav")
+   (loss-sound "Audio\\YouLose.wav")
+   (players Blue Red)
+   (turn-order Blue Red)
+   (board
+        (image "images\TicTacToe\Qubic.bmp")
+        (grid
+            (start-rectangle 4 4 31 31) ; top-left position
+            (dimensions ;4x4x4
+                ("I-/II-/III-/IV-" (0 80))
+                ("a/b/c/d" (58 0))
+				("1/2/3/4" (29 14))
+			)
+            (directions (n -1 0 0) (e 0 1 0) (nw -1 -1 0) (ne -1 1 0)
+        	            (up 0 0 1) (upn -1 0 1) (upe 0 1 1)  
+						(ups 1 0 1) (upw 0 -1 1) (upne -1 1 1)
+		                (upnw -1 -1 1) (upse 1 1 1) (upsw 1 -1 1)
+			)   
+		)
+   )
+  (board-setup
+        (Blue (Ball off 32))
+        (Red (Ball off 32))
+   )
+   (piece (name man))
+   (piece
+        (name Ball)
+		(help "Ball: drops on any empty square")
+		(image Blue "images\TicTacToe\sbluball.bmp"
+		       Red "images\TicTacToe\sredball.bmp")
+        (drops (add-to-empty))
+   )
+ 
+   (loss-condition (Blue Red)
+	  	(or (relative-config Ball n Ball n Ball n Ball)
+            (relative-config Ball e Ball e Ball e Ball)
+            (relative-config Ball ne Ball ne Ball ne Ball)
+            (relative-config Ball nw Ball nw Ball nw Ball)
+			(relative-config Ball up Ball up Ball up Ball)
+			(relative-config Ball upn Ball upn Ball upn Ball)
+			(relative-config Ball upe Ball upe Ball upe Ball)
+			(relative-config Ball upw Ball upw Ball upw Ball)
+			(relative-config Ball ups Ball ups Ball ups Ball)
+			(relative-config Ball upne Ball upne Ball upne Ball)
+			(relative-config Ball upnw Ball upnw Ball upnw Ball)
+			(relative-config Ball upse Ball upse Ball upse Ball)
+			(relative-config Ball upsw Ball upsw Ball upsw Ball)
+		)
+	)
+)
+
+
+(variant (title "-"))  ;-----------------------------------------------------
+
+(variant
+   (title "Order and Chaos (6x6)")
+   (description "One player takes the side of Order and the other takes the
+      side of Chaos.  Order wants to bring order into the game by getting
+	  5 O's or 5 X's in a row, horizontally, vertically, or diagonally.  If
+	  he achieves this he wins the game.  If he fails then Chaos wins.  Order
+	  and Chaos alternate turns with Order going first.  At each move,
+	  a player chooses to play either an X or an O in an empty space.")
+   (history "This game, published in `Games Magazine` is the brainchild of
+      master game designer, Stephen Sniderman.")
+   (strategy "As in Go-Moku an open-four (4-of-a-kind with two open ends) is
+      an unstoppable threat.  Chaos must watch out for this.  Order should
+	look for ways to force Chaos to play in spaces where a either an X or
+	an O brings order.")
+   (players Order Chaos)
+   (turn-order Order (Chaos Order))
+   (board
+        (image "images\TicTacToe\ttt6x6.bmp")
+        (grid
+            (start-rectangle 12 13 60 61) ; top-left position
+            (dimensions
+                ("a/b/c/d/e/f" (56 0)) ; columns
+                ("6/5/4/3/2/1" (0 55))) ; rows
+            (directions (n -1 0) (e 0 1) (nw -1 -1) (ne -1 1))
+        )
+   )
+   (piece (name man))
+   (piece
+        (name X)
+		(image Order "images\TicTacToe\SmallX.bmp")
+        (drops (add-to-empty))
+   )
+   (piece
+        (name O)
+		(image Order "images\TicTacToe\SmallO.bmp")
+        (drops (add-to-empty))
+   )
+   (board-setup
+        (Order (X off 36) (O off 36))
+   )
+
+   (win-condition (Chaos) stalemated)
+   (loss-condition (Order) stalemated)
+   (win-condition (Order)
+	  	(or (relative-config X n X n X n X n X)
+            (relative-config X e X e X e X e X)
+            (relative-config X ne X ne X ne X ne X)
+            (relative-config X nw X nw X nw X nw X)
+			(relative-config O n O n O n O n O)
+            (relative-config O e O e O e O e O)
+            (relative-config O ne O ne O ne O ne O)
+            (relative-config O nw O nw O nw O nw O)
+		)
+	)
+)
+
+(variant (title "-"))  ;-----------------------------------------------------
+
+; *** + and x TicTacToe
+(variant
+    (title "+ and x Tic-Tac-Toe")
+    (description "One side takes Red
+	  and the other side takes Blue.  Players alternate placing their counters,
+        in plus orientation, on open spots.  The object is to get three of
+	  your counters (in the same orientation), in a row horizontally, vertically,
+        or diagonally.  If neither side accomplishes this, it's a cat's game (a draw).\\
+	  Besides being dropped, a counter can be moved one square in the direction of
+	  one of its arrows.  If it moves on top of an enemy piece it captures it.  Also,
+	  each movement causes the counter to spin 45 degrees so that its arrows face
+	  different directions.")
+    (history "This variation on Tic-Tac-Toe was created by Jeff Mallett.")
+    (strategy "If played carefully, this game is a draw.")
+    (option "animate drops" false)
+    (players Red Blue)
+    (turn-order Red Blue)
+    (board
+        (image "images\TicTacToe\TTTbrd.bmp")
+        (grid
+            (start-rectangle 16 16 112 112)
+            (dimensions ;3x3
+                ("top-/middle-/bottom-" (0 112)) ; rows
+                ("left/middle/right" (112 0))
+			)
+			(directions (n -1 0) (e 0 1) (s 1 0) (w 0 -1) (nw -1 -1) (ne -1 1) (sw 1 -1) (se 1 1))
+		)
+	)
+    (piece (name man))
+    (piece
+        (name Plus)
+		(image Red  "images\TicTacToe\redplus.bmp"
+               Blue "images\TicTacToe\blueplus.bmp")
+		(help "Plus: drops on any empty square or moves by its arrows")
+        (drops (add-to-empty))
+		(moves (n (add X)) (s (add X)) (e (add X)) (w (add X)))
+	)
+    (piece
+        (name X)
+		(image Red "images\TicTacToe\redx.bmp" Blue "images\TicTacToe\bluex.bmp")
+		(moves (ne (add Plus)) (se (add Plus)) (nw (add Plus)) (sw (add Plus)))
+	)
+    (board-setup
+        (Red (Plus off 99))
+        (Blue (Plus off 99))
+	)
+    (win-condition (Red Blue)
+        (or (absolute-config X (top-left top-middle top-right))
+            (absolute-config X (middle-left middle-middle middle-right))
+            (absolute-config X (bottom-left bottom-middle bottom-right))
+            (absolute-config X (top-left middle-left bottom-left))
+            (absolute-config X (top-middle middle-middle bottom-middle))
+            (absolute-config X (top-right middle-right bottom-right))
+            (absolute-config X (top-left middle-middle bottom-right))
+            (absolute-config X (top-right middle-middle bottom-left))
+            
+			(absolute-config Plus (top-left top-middle top-right))
+            (absolute-config Plus (middle-left middle-middle middle-right))
+            (absolute-config Plus (bottom-left bottom-middle bottom-right))
+            (absolute-config Plus (top-left middle-left bottom-left))
+            (absolute-config Plus (top-middle middle-middle bottom-middle))
+            (absolute-config Plus (top-right middle-right bottom-right))
+            (absolute-config Plus (top-left middle-middle bottom-right))
+            (absolute-config Plus (top-right middle-middle bottom-left))
+		)
+	)
+)
+
+(variant
+    (title "Beer Square")
+    (description "Object: Get three identical glasses in a row (Full, 
+         Half-Empty or Empty).  You can drop any type of mug on an empty square.  You
+         can `drink` from any partially-full mug and make it less full.")
+    (history "Beer Square was invented by Swedish inventor Dan Glimne, and first
+         published in the British magazine Games & Puzzles (issue 4) in July 1994.
+         It appeared the same year (in Swedish) in Glimne's collection of original
+         games, `Nya Spel`.   Although it somewhat resembles Traffic Lights, it was
+         invented independently.")
+    (strategy "Hint: By playing symmetrically the first player (Bob) has a 
+         forced win.  (Similar to Traffic Lights.)")
+    (option "animate drops" false)
+    (drop-sound "Audio\\BottleBlow.wav")
+    (win-sound "Audio\\BeerPour.wav")
+    (loss-sound "Audio\\BeerPour.wav")
+    (change-sound "")
+    (capture-sound "Audio\\Gulp.wav")
+    (players Bob Doug MrBeer)
+    (turn-order (Bob MrBeer) (Doug MrBeer))
+    (piece (name man))
+    (piece
+        (name Full-Mug)
+        (image MrBeer "images\TicTacToe\mugfull.bmp")
+		(help "Full-Mug: drops on any empty square")
+        (drops (add-to-empty))
+	)
+    (piece
+        (name Half-Mug)
+        (image MrBeer "images\TicTacToe\mughalf.bmp")
+		(help "Half-Mug: drops on any empty square, or on a Full-Mug")
+		(drops
+			(
+				(verify (and (not-piece? Half-Mug) (not-piece? Empty-Mug)) )
+				add
+			)
+		)			
+	)
+    (piece
+        (name Empty-Mug)
+        (image MrBeer "images\TicTacToe\mugempty.bmp")
+		(help "Empty-Mug: drops on any empty square, or on a Full or Half-Mug")
+		(drops
+			((verify (not-piece? Empty-Mug)) add)
+		)			
+	)
+   (board
+        (image "images\TicTacToe\BarTTTbrd.bmp")
+        (grid
+            (start-rectangle 16 16 112 112) ; top-left position
+            (dimensions ;3x3
+                ("top-/middle-/bottom-" (0 112)) ; rows
+                ("left/middle/right" (112 0))) ; columns
+            (directions (n -1 0) (e 0 1) (nw -1 -1) (ne -1 1))
+        )
+   )
+	(board-setup
+        (MrBeer (Full-Mug off 99) (Half-Mug off 99) (Empty-Mug off 99))
+	)
+    (win-condition (MrBeer)
+	  	(or (relative-config Full-Mug n Full-Mug n Full-Mug)
+            (relative-config Half-Mug n Half-Mug n Half-Mug)
+            (relative-config Empty-Mug n Empty-Mug n Empty-Mug)
+
+            (relative-config Full-Mug e Full-Mug e Full-Mug)
+            (relative-config Half-Mug e Half-Mug e Half-Mug)
+            (relative-config Empty-Mug e Empty-Mug e Empty-Mug)
+
+            (relative-config Full-Mug ne Full-Mug ne Full-Mug)
+            (relative-config Half-Mug ne Half-Mug ne Half-Mug)
+            (relative-config Empty-Mug ne Empty-Mug ne Empty-Mug)
+
+            (relative-config Full-Mug nw Full-Mug nw Full-Mug)
+            (relative-config Half-Mug nw Half-Mug nw Half-Mug)
+            (relative-config Empty-Mug nw Empty-Mug nw Empty-Mug)
+       )
+    )
+)
+
+(variant
+    (title "Traffic Lights")
+    (description "Object: Get three identical lights in a row (Red, 
+	   Yellow or Green).  On your move, you can drop a Red light on an empty square,
+	   change Red light to a Yellow light, or change a Yellow light to a Green light.")
+    (history "Traffic Lights was invented by Alan Parr, and originally appeared in
+         World Game Review number 5 in 1985.   In 1997 it appeared as an inexpensive
+         commercial game in England (including some new variants), produced by Fiendish
+         Games.")
+    (strategy "Hint: By playing symmetrically the first player (Bob) has a 
+         forced win.  (Similar to Beer Square.)")
+    (option "animate drops" false)
+    (opening-sound "Audio\\Honk.wav")
+    (drop-sound "Audio\\Switches.wav")
+    (capture-sound "Audio\\Switches.wav")
+    (win-sound "Audio\\DriveBy.wav")
+    (loss-sound "Audio\\Car.wav")
+    (players Bob Doug MrLight)
+    (turn-order (Bob MrLight) (Doug MrLight))
+	(piece (name man))
+   (board
+        (image "images\TicTacToe\TrafficTTTbrd.bmp" "images\TicTacToe\TTTbrd.bmp")
+        (grid
+            (start-rectangle 16 16 112 112) ; top-left position
+            (dimensions ;3x3
+                ("top-/middle-/bottom-" (0 112)) ; rows
+                ("left/middle/right" (112 0))) ; columns
+            (directions (n -1 0) (e 0 1) (nw -1 -1) (ne -1 1))
+        )
+   )
+    (piece
+        (name Red-Light)
+        (image MrLight "images\TicTacToe\REDTraffic.bmp" "images\TicTacToe\RED.bmp")
+		(help "Red-Light: drops on any empty square")
+		(drops (add-to-empty))
+	)
+    (piece
+        (name Yellow-Light)
+        (image MrLight "images\TicTacToe\YELLOWTraffic.bmp" "images\TicTacToe\YELLOW.bmp")
+		(help "Yellow-Light: drops on any empty square or Red-Light")
+		(drops
+			((verify (piece? Red-Light)) add)
+		)			
+	)
+    (piece
+        (name Green-Light)
+        (image MrLight "images\TicTacToe\GREENTraffic.bmp" "images\TicTacToe\GREEN.bmp")
+		(help "Green-Light: drops on any empty square or Yellow-Light")
+		(drops
+			((verify (piece? Yellow-Light)) add)
+		)			
+	)
+	(board-setup
+        (MrLight (Red-Light off 99) (Yellow-Light off 99) (Green-Light off 99))
+	)
+    (win-condition (MrLight)
+	  	(or (relative-config Red-Light n Red-Light n Red-Light)
+            (relative-config Yellow-Light n Yellow-Light n Yellow-Light)
+            (relative-config Green-Light n Green-Light n Green-Light)
+
+            (relative-config Red-Light e Red-Light e Red-Light)
+            (relative-config Yellow-Light e Yellow-Light e Yellow-Light)
+            (relative-config Green-Light e Green-Light e Green-Light)
+
+            (relative-config Red-Light ne Red-Light ne Red-Light)
+            (relative-config Yellow-Light ne Yellow-Light ne Yellow-Light)
+            (relative-config Green-Light ne Green-Light ne Green-Light)
+
+            (relative-config Red-Light nw Red-Light nw Red-Light)
+            (relative-config Yellow-Light nw Yellow-Light nw Yellow-Light)
+            (relative-config Green-Light nw Green-Light nw Green-Light)
+       )
+    )
+)
+
+(variant (title "-"))  ;-----------------------------------------------------
+
+(variant
+   (title "Nu Tic-Tac-Toe")
+   (description "Move your pieces one square at a time in any direction, including
+                 diagonally to make three in a row in any direction.")
+   (history "This variation on Tic-Tac-Toe was created by H. D. Ruderman and
+             appeared in `Games and Puzzles for Elementary and 
+              Middle School Mathematics.`")
+   (strategy "With perfect play, Blue can force a win in 4 moves!  See
+              if you can find it!")
+   (option "animate drops" false)
+   (option "prevent flipping" false)
+   (win-sound "Audio\\Congrats.wav")
+   (loss-sound "Audio\\YouLose.wav")
+   (click-sound "Audio\\Squeek.wav")
+   (move-sound "Audio\\Bip.wav")
+   (release-sound "Audio\\Bip.wav")
+   (players Red Blue)
+   (turn-order Blue Red)
+   (board
+        (image "images\Chess\Shaag\Chess4x5.bmp" "images\Chess\Chess4x5.bmp")
+        (grid
+          (start-rectangle 5 5 53 53)
+          (dimensions
+            ("a/b/c/d" (49 0)) ; files
+            ("5/4/3/2/1" (0 49)) ; ranks
+          )
+          (directions (n 0 -1) (e 1 0) (s 0 1) (w -1 0)
+			     (ne 1 -1) (nw -1 -1) (se 1 1) (sw -1 1)
+          )
+       )
+   )
+   (piece (name man))
+   (piece
+	(image Blue "images\TicTacToe\bballs.bmp"
+	       Red "images\TicTacToe\rballs.bmp")
+        (name Ball)
+		(help "Ball: drops on any empty square")
+        (moves 
+            (step n)
+            (step e)
+            (step s)
+            (step w)
+            (step ne)
+            (step nw)
+            (step se)
+            (step sw)
+	)
+   )
+   (board-setup
+        (Blue (Ball a1 c1 b5 d5))
+        (Red (Ball b1 d1 a5 c5))
+   )
+
+   (draw-condition (Red Blue) stalemated)
+   (win-condition (Red Blue)
+	  	(or (relative-config Ball n Ball n Ball)
+                    (relative-config Ball  e Ball e Ball)
+                    (relative-config Ball ne Ball ne Ball)
+                    (relative-config Ball nw Ball nw Ball)
+		)
+	)
+)
+

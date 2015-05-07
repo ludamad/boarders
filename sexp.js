@@ -4,7 +4,7 @@ SExp = {
         dot = false,
         i, j;
 
-    str: for(i = str.length; i--; ) {
+    str: for(i = str.length; i--; )
       switch(str.charCodeAt(i)) {
         /* Skip whitespace. */
         case     9: case    10: case    11: case    12: case    13:
@@ -43,28 +43,40 @@ SExp = {
 
         /* Atoms get added to the beginning of the current list. */
         default:
-          atom: for(j = i; j--; )
-            switch(str.charCodeAt(j)) {
-              case     9: case    10: case    11: case    12: case    13:
-              case    32: case    40: case    41: case    46: case   160:
-              case  5760: case  6158: case  8192: case  8193: case  8194:
-              case  8195: case  8196: case  8197: case  8198: case  8199:
-              case  8200: case  8201: case  8202: case  8232: case  8233:
-              case  8239: case  8287: case 12288: case 65279:
-                break atom;
-            }
+            /* Strings get wrapped specially: */
 
-          stack.head = {head: str.slice(++j, ++i), tail: stack.head};
+          if (str.charCodeAt(i) == 34) {
+              for(j = i - 1;; j-- ) {
+                  if (j <= 0 || str.charCodeAt(j) == 34) {
+                      break;
+                  }
+              }
+              j--;
+            stack.head = {head: str.slice(++j + 1, ++i - 1), tail: stack.head};
+              print(stack.head.head);
+          } else {
+
+              atom: for(j = i; j--; )
+                switch(str.charCodeAt(j)) {
+                  case     9: case    10: case    11: case    12: case    13:
+                  case    32: case    40: case    41: case    46: case   160:
+                  case  5760: case  6158: case  8192: case  8193: case  8194:
+                  case  8195: case  8196: case  8197: case  8198: case  8199:
+                  case  8200: case  8201: case  8202: case  8232: case  8233:
+                  case  8239: case  8287: case 12288: case 65279:
+                    break atom;
+                }
+            stack.head = {head: str.slice(++j, ++i), tail: stack.head};
+          }
+
           dot = false;
           i = j;
           break;
       }
-    }
 
     if(stack.head === null ||
        stack.tail !== null ||
        stack.head.tail !== null)
-        print(str.substring(i-5,i+7));
       throw new SyntaxError("Invalid s-expression.");
 
     return stack.head.head;
