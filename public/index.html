@@ -4,29 +4,123 @@
   <meta charset="utf-8">
   <title>Boarders</title>
   <link rel="stylesheet" href="css/normalize.css">
-  <link rel="stylesheet" href="css/index.css">
   <link rel="stylesheet" href="css/style.css">
   <link href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.no-icons.min.css" rel="stylesheet">
 </head>
 <body>
-
-<button id="Start" type="button">Run this configuration</button>
-<button id="Stop" type="button">Stop this run</button>
-<div id="yamlEditor"></div>
-        
-<div id='textarea' style="width:950px;height:150px;line-height:3em;overflow:scroll;padding:5px;">
-
-</div>
-
-<script src="http://cdn.alloyui.com/3.0.1/aui/aui-min.js"></script>
-<link href="http://cdn.alloyui.com/3.0.1/aui-css/css/bootstrap.min.css" rel="stylesheet"></link>
 
 <script type="text/x-handlebars">
   {{render "main"}}
   {{outlet}}
 </script>
 
-<script src="libs/jquery-v1.11.1.js"></script>
+<script type="text/x-handlebars" id="main">
+    <div class="navbar">
+      <div class="navbar-inner">
+        {{#link-to 'index' class='brand'}}Boarders{{/link-to}}
+        <ul class="nav">
+          <li>{{#link-to 'index'}}Welcome {{username}}!{{/link-to}}</li>
+          <li>{{#link-to 'games'}}Games{{/link-to}}</li>
+        </ul>
+      </div>
+    </div>
+
+  {{#each alerts}}
+      <div class="alert">{{message}}</div>
+  {{/each}}
+
+  {{#if loggedIn}}
+  {{else}}
+    {{partial "_loginForm"}}
+  {{/if}}
+</script>
+
+<script type="text/x-handlebars" id="_loginForm">
+  <form class="form-horizontal" {{action "login" on="submit"}}>
+    <div class="control-group">
+      <div class="control-label">
+        <label>Username</label>
+      </div>
+
+      <div class="controls">
+        {{input value=username type="text"}}
+      </div>
+    </div>
+
+    <div class="control-group">
+      <div class="control-label">
+        <label>Password</label>
+      </div>
+
+      <div class="controls">
+        {{input value=password type="password"}}
+      </div>
+    </div>
+
+    <button type="submit" class="btn" {{bindAttr disabled="isProcessing"}}>Log-in (or new)</button>
+    <button {{action 'guestLogin'}}>Play as Guest</button>
+
+  </form>
+</script>
+
+  <script type="text/x-handlebars" id="games">
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span3">
+          <table class='table'>
+            <thead>
+              <tr><th>Games</th></tr>
+            </thead>
+
+            <tbody>
+              {{#each model}}
+                <tr>
+                  <td>
+                    {{#link-to 'game' this}}{{name}} <small class='muted'>{{shortDescription}}</small>{{/link-to}}
+                  </td>
+                </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="span9">
+          {{outlet}}
+        </div>
+      </div>
+    </div>
+  </script>
+
+  <script type="text/x-handlebars" id="games/index">
+    <p class="text-warning">Please select a game</p>
+  </script>
+
+  <script type="text/x-handlebars" id="game">
+
+    <h1>{{name}}</h1>
+    <h2>{{shortDescription}} <small class='muted'>({{format-date createdAt}})</small></h2>
+
+    <hr>
+
+    <div class='below-the-fold'>
+      {{body}}
+      <div id="board-container"></div>
+    </div>
+
+    {{#if isPlaying}}
+    {{else}}
+      <button {{action 'play'}}>Play Now</button>
+    {{/if}}
+
+  </script>
+
+  <script type="text/x-handlebars" id="lobby">
+    <div class='about'>
+    COMING SOON
+    </div>
+  </script>
+
+  <script src="libs/jquery-v1.11.1.js"></script>
   <script src="libs/jquery.cookie.js"></script>
   <script src="libs/handlebars-v1.3.0.js"></script>
   <script src="libs/ember-v1.6.1.js"></script>
@@ -36,10 +130,10 @@
   <script src="../engine/dependencies/lua.js"></script>
   <script src="../engine/dependencies/alertify.min.js"></script>
 
+
   <script src="http://cdnjs.cloudflare.com/ajax/libs/showdown/0.3.1/showdown.min.js"></script>
   <script src="http://cdnjs.cloudflare.com/ajax/libs/moment.js/2.1.0/moment.min.js"></script>
   <script type="text/coffeescript" src="app.coffee"></script>
-  <script type="text/coffeescript" src="anyboard.coffee"></script>
   <script src="http://coffeescript.org/extras/coffee-script.js"></script>
 </body>
 </html>
