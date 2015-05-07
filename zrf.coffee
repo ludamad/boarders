@@ -6,7 +6,18 @@ clc = require('cli-color')
 ################################################################################'
 
 sexprCopy = (sexpr) ->
-    if sexpr.
+    if not sexpr? or typeof sexpr != 'object'
+        return sexpr
+    return {head: sexprCopy(sexpr.head), tail: sexprCopy(sexpr.tail)}
+
+sexprVisitNamed = (sexpr, f) ->
+    if not sexpr? then return
+    if typeof sexpr.head == 'string'
+        f(sexpr)
+    # Purposefully allow head to be turned into an object which we further investigate:
+    if sexpr.head? and typeof sexpr.head == 'object'
+        sexprVisitNamed(sexpr.head, f)
+    sexprVisitNamed(sexpr.tail, f)
 
 # Convert an s-expression into a list of expressions
 s2l = (sexpr) ->
@@ -22,10 +33,9 @@ isArray = (obj) ->
 # Convert an s-expression into a list of lists of expressions
 s2ll = (sexpr) -> [s2l(S) for S in s2l(sexpr)]
 
-# Convert an s-expression into a list of pairs of expressions
-s2pairs = (sexpr) ->
+# Fold an s-expression list into a list of pairs of s-expressions
+toPairs = (l) ->
     pairs = []
-    l = s2l(sexpr)
     i = 0
     while i < l.length
         pairs.push [l[i],l[i+1]]
@@ -45,7 +55,6 @@ _parseField = (obj, field, type, value) ->
         obj[member] = v
     if typeof type == 'object'
         field = field.substring(0, field.length - 1)
-        print "Truncating #{member} -> #{field} for #{type[0]}"
         type = type[0]
         addData = (v) ->
             if not obj[member]?
@@ -85,7 +94,6 @@ _parseField = (obj, field, type, value) ->
         addData [new Z[type](s2l(S)) for S in value]
 
 pprint = (V, indent = 0) ->
-
     t = ''
     s = ''
     for k in [0..indent]
@@ -138,12 +146,16 @@ Z.Dimensions = ([rows, cols]) ->
     @yLabels = yLabels.split("/")
 
 def('Directions') {
-    dirs: s2ll
+    dirs: (S) -> [s2l(s) for s in S]
 }
 
 def('Piece') {
     name: 'string', help: 'string'
-    image: s2pairs
+    image: (S) -> 
+        if not @images? 
+            @images = {}
+        for [player, file] in toPairs(S)
+            @images[player] = file
     drops: (S) ->
         print('drops ' + JSON.stringify S)
 }
@@ -180,24 +192,12 @@ def('Game') {
     'win-conditions': ['EndCondition']
 }
 
-# Macro substitution:
+# Macro substitution for arguments eg $1, $2:
 replaceArguments = (S, replacements) -> 
-    if not S? or typeof S != 'object'
-        return
-    if typeof S.head != 'object'
-        for {head, tail} in defines
-            if S.head == head
-                args = s2l(S.tail)
-                replacements = {}
-                for i in [1..args.length]
-                    replacements["$#{i}"] = args[i-1]
-                newObj = copyAndReplaceArguments(S, replacements)
-                S.head = newObj.head
-                S.tail = newObj.tail
-                return
-    else
-        replaceDefines(S.head, defines)
-    replaceDefines(S.tail, defines)
+    sexprVisitNamed S, (child) ->
+        if replacements[child.head]?
+            r = sexprCopy replacements[child.head]
+            child.head = r
 
 replaceDefines = (S, defines) -> 
     if not S? or typeof S != 'object'
@@ -209,7 +209,8 @@ replaceDefines = (S, defines) ->
                 replacements = {}
                 for i in [1..args.length]
                     replacements["$#{i}"] = args[i-1]
-                newObj = copyAndReplaceArguments(S, replacements)
+                newObj = sexprCopy tail
+                replaceArguments(newObj, replacements)
                 S.head = newObj.head
                 S.tail = newObj.tail
                 return
@@ -218,23 +219,22 @@ replaceDefines = (S, defines) ->
     replaceDefines(S.tail, defines)
 
 findAndReplaceDefines = (S) -> 
-    print "BEFORE REPLACEMENT"
     # Defines should be top level:
     defines = []
-    for {head,tail} in s2l(S)
-        if head == 'define'
-            defines.push(tail)
-    for v in s2l(S)
-        if v.head != 'define'
-            replaceDefines(v, defines)
-    print "AFTER REPLACEMENT"
-    print(S)
+    newNodes = []
+    for node in s2l(S)
+        if node.head == 'define'
+            defines.push(node.tail)
+        else
+            newNodes.push(node)
+    for v in newNodes
+        replaceDefines(v, defines)
+    return newNodes
 
 module.exports = {
-
     sexpToZrfObjModel: (S) -> 
-        findAndReplaceDefines(S)
-        model = new Z.File(s2l(S))
-        #print pprint(model)
+        nodes = findAndReplaceDefines(S)
+        model = new Z.File(nodes)
+        print pprint(model)
         return model
 }
