@@ -1,30 +1,8 @@
 ###############################################################################
-# Mock data
-###############################################################################
-
-LUA_FILES = [
-        '/engine/CoreApi.lua'
-        '/engine/ServerApi.lua'
-        '/engine/KineticHtml5Client.lua'
-        '/engine/TicTacToe/TicTacToe.lua'
-        '/engine/TestMain.lua'
-]
-
-###############################################################################
 # Generic utilities
 ###############################################################################
 
 String::toCapitalized = () -> "#{@charAt(0).toUpperCase()}#{@slice(1)}"
-
-getAndDoLua = (files, i=0) -> (filesrc) ->
-    if filesrc? 
-        console.log "Executing #{files[i-1]}"
-        L.execute(filesrc)
-    $.ajax {
-        type: 'GET',
-        url: files[i],
-        success: getAndDoLua(files, i+1)
-    }
 
 ###############################################################################
 # Handlebars callbacks:
@@ -104,7 +82,6 @@ ObjectController("game") {
     isPlaying: false
     actions: {
         play: () ->
-            getAndDoLua(LUA_FILES)() 
             @set('isPlaying', true)
         resign: () ->
             @set('isPlaying', false)

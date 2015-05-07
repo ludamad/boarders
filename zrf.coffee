@@ -115,6 +115,53 @@ pprint = (V, indent = 0) ->
                 s += "#{t} #{clc.green k} #{pprint(V[k], indent + 1)}"
     return s
 
+################################################################################
+# ZRF macro substitution
+################################################################################'
+
+# Macro substitution for arguments eg $1, $2:
+replaceArguments = (S, replacements) -> 
+    sexprVisitNamed S, (child) ->
+        if replacements[child.head]?
+            r = sexprCopy replacements[child.head]
+            child.head = r
+
+replaceDefines = (S, defines) -> 
+    if not S? or typeof S != 'object'
+        return
+    if typeof S.head != 'object'
+        for {head, tail} in defines
+            if S.head == head
+                args = s2l(S.tail)
+                replacements = {}
+                for i in [1..args.length]
+                    replacements["$#{i}"] = args[i-1]
+                newObj = sexprCopy tail
+                replaceArguments(newObj, replacements)
+                S.head = newObj.head
+                S.tail = newObj.tail
+                return
+    else
+        replaceDefines(S.head, defines)
+    replaceDefines(S.tail, defines)
+
+findAndReplaceDefines = (S) -> 
+    # Defines should be top level:
+    defines = []
+    newNodes = []
+    for node in s2l(S)
+        if node.head == 'define'
+            defines.push(node.tail)
+        else
+            newNodes.push(node)
+    for v in newNodes
+        replaceDefines(v, defines)
+    return newNodes
+
+################################################################################
+# The ZRF object model:
+################################################################################'
+
 # Helper for succintly describing the shape of ZRF object model nodes:
 def = (name) -> (fields) ->
     Z[name] = class Base 
@@ -157,17 +204,19 @@ def('Piece') {
         for [player, file] in toPairs(S)
             @images[player] = file
     drops: (S) ->
-        print('drops ' + JSON.stringify S)
+        S
 }
 
 def('Grid') {
-    'start-rectangle': s2l
+    'start-rectangle': ([x1, y1, x2, y2]) ->
+        return {x1, y1, x2, y2}
+
     dimensions: 'Dimensions'
     directions: 'Directions'
 }
 
 def('Board') {
-    image: s2l
+    image: 'string'
     grid: 'Grid'
 }
 
@@ -191,45 +240,6 @@ def('Game') {
     'draw-conditions': ['EndCondition']
     'win-conditions': ['EndCondition']
 }
-
-# Macro substitution for arguments eg $1, $2:
-replaceArguments = (S, replacements) -> 
-    sexprVisitNamed S, (child) ->
-        if replacements[child.head]?
-            r = sexprCopy replacements[child.head]
-            child.head = r
-
-replaceDefines = (S, defines) -> 
-    if not S? or typeof S != 'object'
-        return
-    if typeof S.head != 'object'
-        for {head, tail} in defines
-            if S.head == head
-                args = s2l(S.tail)
-                replacements = {}
-                for i in [1..args.length]
-                    replacements["$#{i}"] = args[i-1]
-                newObj = sexprCopy tail
-                replaceArguments(newObj, replacements)
-                S.head = newObj.head
-                S.tail = newObj.tail
-                return
-    else
-        replaceDefines(S.head, defines)
-    replaceDefines(S.tail, defines)
-
-findAndReplaceDefines = (S) -> 
-    # Defines should be top level:
-    defines = []
-    newNodes = []
-    for node in s2l(S)
-        if node.head == 'define'
-            defines.push(node.tail)
-        else
-            newNodes.push(node)
-    for v in newNodes
-        replaceDefines(v, defines)
-    return newNodes
 
 module.exports = {
     sexpToZrfObjModel: (S) -> 
