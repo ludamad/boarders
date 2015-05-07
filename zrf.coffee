@@ -25,52 +25,36 @@ s2pairs = (sexpr) ->
         i += 2
     return pairs
 
-sUnbox = (sexpr) ->
-    assert.equal(sexpr.tail, null)
-    return sexpr.head
-
-atomFieldImpl = (field, isAtom) -> (S) ->
-    if isAtom
-        @[field] = sUnbox(S)
-    else
-        @[field] = s2l(S)
-listFieldImpl = (k, cls) -> (S) ->
-    @[k + 's'].push(new cls(S))
-
 ################################################################################
 # The ZRF object model:
 ################################################################################'
 
 Z = {}
 
-_findField = (list, key) ->
-    for {head, tail} in list
-        if head == key
-            return s2l(tail)
-    return null
-
-_parseField = (obj, field, type, list) ->
+_parseField = (obj, field, type, value) ->
     member = field
 
     addData = (v) ->
         obj[field] = v
     if typeof type == 'object'
         field = field.substring(0, field.length - 1)
-        print "Truncating #{member} -> #{field} for {type[0]}"
+        print "Truncating #{member} -> #{field} for #{type[0]}"
         type = type[0]
         addData = (v) ->
             if not obj[field]?
                 obj[field] = []
             obj[field].push(v)
 
-    value = _findField(list, field)
-
     ###################################################
     # Dispatch based on type field, whether it is an object, and whether it ends in '*'
     ###################################################
 
     if value == null
-        print "**NYI: #{obj._classname} #{field}"
+        print "**NOT FOUND: #{obj._classname} #{field}"
+
+    # Handler function:
+    else if typeof type == 'function'
+        addData type(value)
 
     # Simple atom (string):
     else if type == 'string'
@@ -86,33 +70,37 @@ _parseField = (obj, field, type, list) ->
 
     # ZRF object:
     else if type.substring(type.length-1,type.length) != '*'
-        assert.equal(value.length, 1)
-        addData new Z[type](value[0])
-
+        addData new Z[type](value)
+    
     # List of ZRF objects:
     else
         type = type.substring(0, type.length - 1)
-        addData [new Z[type](S) for S in value]
+        addData [new Z[type](s2l(S)) for S in value]
 
 # Helper for succintly describing the shape of ZRF object model nodes:
 def = (name) -> (fields) ->
     Z[name] = class Base 
-        _classname: name
-        constructor: (S) ->
-            fields._init?.call(@, S)
-            list = s2l(S)
-            for field of fields 
-                if field != '_init'
-                    _parseField(@, field, fields[field], list)
+        constructor: (list) ->
+            fields._init?.call(@, list)
+            for {head, tail} in list
+                value = s2l(tail)
+                parsed = false
+                for field of fields 
+                    if field.indexOf(head) == 0
+                        _parseField(@, field, fields[field], value)
+                        parsed = true
+                        break
+                if not parsed
+                    print "**NYI: #{name} #{head}"
 
-def 'File' {
+def('File') {
     version: 'string'
     games: ['Game']
 }
 
-def 'Dimensions' {
-    _init: (S) ->
-        [rows, cols] = s2l(S)
+def('Dimensions') {
+    _init: (list) ->
+        [rows, cols] = list
         [yLabels, yBnds] = s2l(rows)
         [xLabels, xBnds] = s2l(cols)
         [@x1, @x2] = s2l(xBnds)
@@ -121,33 +109,33 @@ def 'Dimensions' {
         @yLabels = yLabels.split("/")
 }
 
-def 'Directions' {
+def('Directions') {
     dirs: s2ll
 }
 
-def 'Piece' {
+def('Piece') {
     name: 'string', help: 'string'
     image: s2pairs
     drops: (S) ->
         print('drops ' + JSON.stringify S)
 }
 
-def 'Grid' {
+def('Grid') {
     'start-rectangle': s2l
     dimensions: 'Dimensions'
     directions: 'Directions'
 }
 
-def 'Board' {
+def('Board') {
     image: s2l
     grid: 'Grid'
 }
 
-def 'BoardSetup' {
+def('BoardSetup') {
     parts: s2l
 }
 
-def 'Game' {
+def('Game') {
     title: 'string', description: 'string'
     history: 'string', strategy: 'string'
     players: 'string*'
@@ -156,10 +144,10 @@ def 'Game' {
     boards: ['Board']
     pieces: ['Piece']
     option: (S) ->
-        [label, value] = s2l(S)
+        [label, value] = S
         return {label, value}
 }
 
 module.exports = {
-    sexpToZrfObjModel: (S) -> new Z.File(S)
+    sexpToZrfObjModel: (S) -> new Z.File(s2l(S))
 }
