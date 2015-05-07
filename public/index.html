@@ -25,8 +25,8 @@
       </div>
     </div>
 
-  {{#each alerts}}
-      <div class="alert">{{message}}</div>
+  {{#each alert in alerts}}
+      <div class="alert">{{alert.message}}</div>
   {{/each}}
 
   {{#if loggedIn}}
@@ -57,7 +57,7 @@
       </div>
     </div>
 
-    <button type="submit" class="btn" {{bindAttr disabled="isProcessing"}}>Log-in (or new)</button>
+    <button type="submit" class="btn" {{bind-attr disabled="isProcessing"}}>Log-in (or new)</button>
     <button {{action 'guestLogin'}}>Play as Guest</button>
 
   </form>
@@ -73,10 +73,10 @@
             </thead>
 
             <tbody>
-              {{#each model}}
+              {{#each game in model}}
                 <tr>
                   <td>
-                    {{#link-to 'game' this}}{{name}} <small class='muted'>{{shortDescription}}</small>{{/link-to}}
+                    {{#link-to 'game' game}}{{game.name}} <small class='muted'>{{game.shortDescription}}</small>{{/link-to}}
                   </td>
                 </tr>
               {{/each}}
@@ -122,8 +122,8 @@
 
   <script src="libs/jquery-v1.11.1.js"></script>
   <script src="libs/jquery.cookie.js"></script>
-  <script src="libs/handlebars-v1.3.0.js"></script>
-  <script src="libs/ember-v1.6.1.js"></script>
+  <script src="libs/handlebars-v2.0.0.js"></script>
+  <script src="libs/ember-1.9.1.js"></script>
 
   <script src="../engine/dependencies/kinetic-v5.1.0.min.js"></script>
   <script src="../engine/dependencies/kinetic-resize.js"></script>
