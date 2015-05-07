@@ -5,6 +5,9 @@ clc = require('cli-color')
 # ZRF S-expression helpers:
 ################################################################################'
 
+sexprCopy = (sexpr) ->
+    if sexpr.
+
 # Convert an s-expression into a list of expressions
 s2l = (sexpr) ->
     l = []
@@ -81,27 +84,33 @@ _parseField = (obj, field, type, value) ->
         type = type.substring(0, type.length - 1)
         addData [new Z[type](s2l(S)) for S in value]
 
+pprint = (V, indent = 0) ->
+
+    t = ''
+    s = ''
+    for k in [0..indent]
+        t += '  '
+
+    if typeof V != 'object'
+        return (if V? then V.toString() else clc.yellow 'null') + '\n'
+    else if isArray(V)
+        s += "\n"
+        for v in V
+            s += "#{t}- #{pprint(v, indent + 2)}"
+    else 
+        if V._classname?
+            s += "#{clc.blue V._classname}\n"
+        else
+            s += "\n"
+        for k in Object.keys(V)
+            if V[k]?
+                s += "#{t} #{clc.green k} #{pprint(V[k], indent + 1)}"
+    return s
+
 # Helper for succintly describing the shape of ZRF object model nodes:
 def = (name) -> (fields) ->
-    toString = (indent = 0) ->
-        t = ''
-        s = ''
-        for k in [0..indent]
-            t += '  '
-        s += "#{clc.blue name}\n"
-        for k in Object.keys(@)
-            if isArray(@[k])
-                s += "#{t} #{clc.red k}\n"
-                for v in @[k]
-                    s += "#{t}  #{clc.red '-'} #{v.toString(indent + 2)}\n"
-            else if typeof @[k] == 'object' and not @[k]._zObject?
-                s += "#{t} #{clc.green k} #{toString.call(@[k], indent + 1)}\n"
-            else if @[k]?
-                s += "#{t} #{clc.green k} #{@[k].toString(indent + 1)}\n"
-        return s
-
     Z[name] = class Base 
-        _zObject: true
+        _classname: name
         constructor: (list) ->
             fields._init?.call(@, list)
             for {head, tail} in list
@@ -114,23 +123,19 @@ def = (name) -> (fields) ->
                         break
                 if not parsed
                     print "**NYI: #{name} #{head}"
-        toString: toString
 
 def('File') {
     version: 'string'
     games: ['Game']
 }
 
-def('Dimensions') {
-    _init: (list) ->
-        [rows, cols] = list
-        [yLabels, yBnds] = s2l(rows)
-        [xLabels, xBnds] = s2l(cols)
-        [@x1, @x2] = s2l(xBnds)
-        [@y1, @y2] = s2l(yBnds)
-        @xLabels = xLabels.split("/")
-        @yLabels = yLabels.split("/")
-}
+Z.Dimensions = ([rows, cols]) ->
+    [yLabels, yBnds] = s2l(rows)
+    [xLabels, xBnds] = s2l(cols)
+    [@x1, @x2] = s2l(xBnds)
+    [@y1, @y2] = s2l(yBnds)
+    @xLabels = xLabels.split("/")
+    @yLabels = yLabels.split("/")
 
 def('Directions') {
     dirs: s2ll
@@ -154,9 +159,11 @@ def('Board') {
     grid: 'Grid'
 }
 
-def('BoardSetup') {
-    parts: s2l
-}
+Z.BoardSetup = (players) ->
+    @players = players
+
+Z.EndCondition = ([@players, @condition]) ->
+    # Parse conditions in separate file, same as directionality stuff.
 
 def('Game') {
     title: 'string', description: 'string'
@@ -169,11 +176,65 @@ def('Game') {
     option: (S) ->
         [label, value] = S
         return {label, value}
+    'draw-conditions': ['EndCondition']
+    'win-conditions': ['EndCondition']
 }
 
+# Macro substitution:
+replaceArguments = (S, replacements) -> 
+    if not S? or typeof S != 'object'
+        return
+    if typeof S.head != 'object'
+        for {head, tail} in defines
+            if S.head == head
+                args = s2l(S.tail)
+                replacements = {}
+                for i in [1..args.length]
+                    replacements["$#{i}"] = args[i-1]
+                newObj = copyAndReplaceArguments(S, replacements)
+                S.head = newObj.head
+                S.tail = newObj.tail
+                return
+    else
+        replaceDefines(S.head, defines)
+    replaceDefines(S.tail, defines)
+
+replaceDefines = (S, defines) -> 
+    if not S? or typeof S != 'object'
+        return
+    if typeof S.head != 'object'
+        for {head, tail} in defines
+            if S.head == head
+                args = s2l(S.tail)
+                replacements = {}
+                for i in [1..args.length]
+                    replacements["$#{i}"] = args[i-1]
+                newObj = copyAndReplaceArguments(S, replacements)
+                S.head = newObj.head
+                S.tail = newObj.tail
+                return
+    else
+        replaceDefines(S.head, defines)
+    replaceDefines(S.tail, defines)
+
+findAndReplaceDefines = (S) -> 
+    print "BEFORE REPLACEMENT"
+    # Defines should be top level:
+    defines = []
+    for {head,tail} in s2l(S)
+        if head == 'define'
+            defines.push(tail)
+    for v in s2l(S)
+        if v.head != 'define'
+            replaceDefines(v, defines)
+    print "AFTER REPLACEMENT"
+    print(S)
+
 module.exports = {
+
     sexpToZrfObjModel: (S) -> 
+        findAndReplaceDefines(S)
         model = new Z.File(s2l(S))
-        print model.toString()
+        #print pprint(model)
         return model
 }
