@@ -1,8 +1,9 @@
-sys = require("sys")
 fs = require("fs")
 
 assert = require('assert')
 sexp = require("./sexp")
+
+{sexpToZrfObjModel} = require './zrf'
 
 ################################################################################
 # Raw s-expression parsing:
@@ -113,7 +114,7 @@ class ZrfPiece extends ZrfBase
         for [kind, img] in s2pairs(S)
             print(kind)
             print(img)
-        
+
 class ZrfGrid extends ZrfBase
     _classname: 'ZrfGrid'
     constructor: (S) -> 
@@ -152,7 +153,8 @@ class ZrfGame extends ZrfBase
 
 parse = (fileName) ->
     sexps = parseRaw(fileName)
-    zrfObjModel = new ZrfFile(sexps)
+    #zrfObjModel = new ZrfFile(sexps)
+    zrfObjModel = sexpToZrfObjModel(sexps)
     return zrfObjModel
 
 module.exports = {parseRaw, parse}
