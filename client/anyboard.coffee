@@ -18,6 +18,7 @@ CSS = {
     white: 'white-1e1d7'
 }
 
+window.print = () ->
 cfg = {
     showNotation: true
 }
@@ -29,9 +30,10 @@ class HtmlStack
     constructor: (@player, @piece, @amount = 0) ->
 
 class HtmlBoard
-    constructor: (zrfBoard, @boardId) ->
+    constructor: (@boardId, zrfBoard, @orientation = 'white') ->
         {grid: {dimensions: {width, height}}} = zrfBoard
         [@width, @height] = [width, height]
+        @elem = $('#' + @boardId)
         @squareSize = (parseInt(@elem.width(), 10) - 4) / @width
         @gridIds = []
         @gridImages = [[null]]
@@ -39,26 +41,27 @@ class HtmlBoard
     render: () ->
         html = ''
         squareColor = 'white'
-        row = (if orientation == 'black' then 1 else 8)
+        row = (if @orientation == 'black' then 1 else 8)
 
         for y in [1..@height]
             rowIds = []
             # Start the row:
             html += '<div class="' + CSS.row + '">'
+            startColor = squareColor
             for x in [1..@width]
                 html += '<div class="' + CSS.square + ' ' + CSS[squareColor]
-                html += ' id="' + @boardId + "-" + x + "-" + y +'"'
+                html += ' id="' + @boardId + "-" + x + "-" + y + '"'
                 html += ' style="width: ' + @squareSize + 'px; height: ' + @squareSize + 'px">'
                 html += '</div>'
                 squareColor = if squareColor == 'white' then 'black' else 'white'
 
             # Finish the row:
             html += '<div class="' + CSS.clearfix + '"></div></div>';
-            squareColor = if squareColor == 'white' then 'black' else 'white'
-            if orientation == 'white' then row-- else row++
+            squareColor = if startColor == 'white' then 'black' else 'white'
+            if @orientation == 'white' then row-- else row++
             @gridIds.push(rowIds)
-        return html
-     _getElem: (x, y) -> $("##{@boardId}-#{x+1}-#{y+1}")
+        @elem.html html
+     _getElem: (x, y) -> $("##{@boardId}-#{x+1}-#{y + 1}")
      set: (x, y, image) ->
  
 fixImgUrl = (url) ->
@@ -69,13 +72,14 @@ fixImgUrl = (url) ->
 # Composed of some number of boards and stacks, for now
 class HtmlPlayArea
     constructor: (elem, zrfGame) ->
-        @elem = $(elem) 
-        @boards = {}
-        for board in zrfGame.board
-            @boards.push(new HtmlBoard(board))
+        @elem = $('#' + elem) 
+        @boards = []
+        for board in zrfGame.boards
+            @boards.push(new HtmlBoard('board-1', board))
         @pieceStacks = {}
-    create: () ->
-        @elem.html(buildBoardContainer())
+    render: () ->
+        for board in @boards
+            board.render()
 
 SQUARE_SIZE = 32
 COLUMNS = 'abcdefgh'.split('')
@@ -112,10 +116,11 @@ buildBoardContainer = (o = 'white') ->
     html += '</div>'
     return html
 
-#board = new HtmlBoard('#board-container')
-#board.create()
-
 $.get 'tictactoe.zrf', (content) ->
     P = require("./zrfparser")
     zrfFile = P.parse(content)
-    board = new HtmlPlayArea(zrfFile, '#board-container')
+    [zrfGame] = zrfFile.games
+    board = new HtmlPlayArea('board-container', zrfGame)
+    board.render()
+
+module.exports = {HtmlPlayArea, HtmlBoard}

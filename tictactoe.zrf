@@ -4,26 +4,6 @@
 (define step          ($1 (verify empty?) add) )
 
 (game
-   (title "Tic-Tac-Toe")
-   (description "One side takes X's and the other side takes O's.  Players alternate
-      placing their marks on open spots.  The object is to get three of
-	  your marks in a row horizontally, vertically, or diagonally.  If neither
-	  side accomplishes this, it's a cat's game (a draw).")
-   (history "Tic-Tac-Toe was an old adaptation of Three Men's Morris to situations
-      where there were no available pieces.  You can draw or carve marks
-	  and they are never moved.  It is played all over the world under various
-	  names, such as `Noughts and Crosses` in England.")
-   (strategy "With perfect play, Tic-Tac-Toe is a draw.  Against less than perfect
-      opponents it's an advantage to go first, as having an extra mark on the board
-	  never hurts your position.  The center is the key square as 4 possible wins
-	  go through it.  The corners are next best as 3 wins go through each of them.  The
-	  side squares are least valuable, as only 2 wins go through them.  Try to
-	  get in positions where you can `trap` your opponent by threatening two 3-in-a-rows
-	  simultaneously with a single move.  To be a good player, you must not only know
-	  how to draw as the second player, you must also be able to takes advantage of
-	  bad play.")
-   (option "animate drops" false)
-   (option "prevent flipping" 2)
    (players X O)
    (turn-order X O)
    (board
@@ -47,16 +27,4 @@
         (X (man off 5))
         (O (man off 5))
    )
-
-   (draw-condition (X O) stalemated)
-   (win-condition (X O)
-	  	(or (relative-config man n man n man)
-            (relative-config man e man e man)
-            (relative-config man ne man ne man)
-            (relative-config man nw man nw man)
-		)
-	)
 )
-
-        @boards = {}
-        @stacks = {}

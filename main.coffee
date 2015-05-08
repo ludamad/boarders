@@ -9,8 +9,10 @@ server = require('http').createServer(app)
 io = require('socket.io')(server)
 port = process.env.PORT || 8081
 
+fs = require "fs"
+
 C = require 'cli-color'
-P = require("./zrfparser")
+P = require("./client/zrfparser")
 
 SITE_NAME = "Boarders"
 VERSION_MAJOR = '0'
@@ -22,3 +24,7 @@ M.serverStart = () ->
 
     server.listen port, () ->
         print("Server listening at port #{C.green port}")
+
+    content = fs.readFileSync("tictactoe.zrf", "utf8")
+    P.parse(content).print()
+

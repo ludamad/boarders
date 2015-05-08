@@ -54,6 +54,8 @@ _parseField = (obj, field, type, value) ->
         field = field.substring(0, field.length - 1)
         type = type[0]
         addData = (v) ->
+            print member
+            print v
             if not obj[member]?
                 obj[member] = []
             obj[member].push(v)
@@ -164,13 +166,16 @@ findAndReplaceDefines = (S) ->
 def = (name) -> (fields) ->
     Z[name] = class Base 
         _classname: name
+        print: () -> print(pprint @)
         constructor: (list) ->
             fields._init?.call(@, list)
             for {head, tail} in list
                 value = s2l(tail)
                 parsed = false
                 for field in Object.keys(fields)
-                    if field.indexOf(head) == 0
+                    if field == head or field == head + 's'
+                        print field
+                        print head
                         _parseField(@, field, fields[field], value)
                         parsed = true
                         break
