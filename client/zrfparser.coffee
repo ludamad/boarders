@@ -1,7 +1,4 @@
-fs = require("fs")
-
-assert = require('assert')
-sexp = require("./sexp")
+sexp = require("./sexp.js")
 
 {sexpToZrfObjModel} = require './zrf'
 
@@ -9,9 +6,7 @@ sexp = require("./sexp")
 # Raw s-expression parsing:
 ################################################################################'
 
-parseRaw =(fileName) ->
-    content = fs.readFileSync(fileName, "utf8")
-
+parseRaw =(content) ->
     # Keep our parser simple by sanitizing parts of the file, for now (TODO integrate into parser maybe.)
 
     # Remove comments:
@@ -23,8 +18,8 @@ parseRaw =(fileName) ->
     parsed = sexp.parse(content)
     return parsed
 
-parse = (fileName) ->
-    sexps = parseRaw(fileName)
+parse = (content) ->
+    sexps = parseRaw(content)
     #zrfObjModel = new ZrfFile(sexps)
     zrfObjModel = sexpToZrfObjModel(sexps)
     return zrfObjModel
