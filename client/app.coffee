@@ -1,4 +1,5 @@
 anyboard = require "./anyboard"
+{setupBreakthrough} = require "./Breakthrough"
 
 ###############################################################################
 # Generic utilities
@@ -146,3 +147,7 @@ Controller("main") {
             loggedInRecent: false
         }
 }
+
+# Hackety prototyping:
+
+setupBreakthrough()

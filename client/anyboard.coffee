@@ -37,9 +37,8 @@ class HtmlPiece
         @elem.attr 'style', "width: #{w}px; height: #{h}px;"
 
 class HtmlBoard
-    constructor: (@boardId, zrfBoard, @orientation = 'white') ->
-        {grid: {dimensions: {width, height}}} = zrfBoard
-        [@width, @height] = [width, height]
+    constructor: (@boardId, @width, @height) ->
+        @orientation = 'white'
         @elem = $('#' + @boardId)
         @sqrWidth = (parseInt(@elem.width(), 10)) / @width
         @sqrHeight = @sqrWidth # Square squares for now. Makes sense.
@@ -84,7 +83,7 @@ class HtmlBoard
          endHover = () ->
              $(@).css 'border', '2px solid transparent'
          onClick = () ->
-             piece = new HtmlPiece('images/TicTacToe/TTTX.png', @squareSize, @squareSize)
+             #piece = new HtmlPiece('images/TicTacToe/TTTX.png', @squareSize, @squareSize)
              $(@).append(piece.elem)
              x = parseInt($(@).attr 'data-x')
              y = parseInt($(@).attr 'data-y')
@@ -94,29 +93,31 @@ class HtmlBoard
  
      _getElem: (x, y) -> $('#' + @_getId(x, y))
      set: (x, y, image) ->
- 
-fixImgUrl = (url) ->
-    url = url.replace("\\", "/")
-    url = url.replace("\.bmp", ".png")
-    url = url.replace("\.BMP", ".png")
 
 # Composed of some number of boards and stacks, for now
 class HtmlPlayArea
-    constructor: (elem, zrfGame) ->
+    constructor: (elem) ->
         @elem = $('#' + elem) 
         @boards = []
-        for board in zrfGame.boards
-            @boards.push(new HtmlBoard('board-1', board))
         @pieceStacks = {}
+    board: (id, w, h) -> 
+        board = new HtmlBoard(id, w, h)
+        @boards.push(board)
     setup: () ->
         for board in @boards
             board.setup()
 
-$.get 'tictactoe.zrf', (content) ->
-    P = require("./zrfparser")
-    zrfFile = P.parse(content)
-    [zrfGame] = zrfFile.games
-    board = new HtmlPlayArea('board-container', zrfGame)
-    board.setup()
+#$.get 'tictactoe.zrf', (content) ->
+#    P = require("./zrfparser")
+#    zrfFile = P.parse(content)
+#    [zrfGame] = zrfFile.games
+#    board = new HtmlPlayArea('board-container', zrfGame)
+#    board.setup()
+
+# TODO to be part of zrf module:
+fixImgUrl = (url) ->
+    url = url.replace("\\", "/")
+    url = url.replace("\.bmp", ".png")
+    url = url.replace("\.BMP", ".png")
 
 module.exports = {HtmlPlayArea, HtmlBoard}

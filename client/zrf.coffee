@@ -247,10 +247,10 @@ def('Game') {
     'win-conditions': ['EndCondition']
 }
 
-module.exports = {
-    sexpToZrfObjModel: (S) -> 
-        nodes = findAndReplaceDefines(S)
-        model = new Z.File(nodes)
-        print pprint(model)
-        return model
-}
+Z.sexpToZrfObjModel = (S) ->
+    nodes = findAndReplaceDefines(S)
+    model = new Z.File(nodes)
+    print pprint(model)
+    return model
+
+module.exports = Z
