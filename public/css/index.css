@@ -21,7 +21,8 @@
 
 #board-container {
   position: 'absolute'; 
-  border: 2px solid;
+  overflow: hidden;
+  width: 100%;
 }
 
 /* clearfix */
@@ -31,6 +32,8 @@
 
 /* board */
 .board-b72b1 {
+  overflow: hidden;
+  width: 100%;
   position: 'center'; 
   border: 2px solid #404040;
   -webkit-box-sizing: content-box;
@@ -42,6 +45,7 @@
 .square-55d63 {
   float: left;
   position: relative;
+  border: 2px solid transparent;
 
   /* disable any native browser highlighting */
   -webkit-touch-callout: none;
