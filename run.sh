@@ -5,7 +5,7 @@ ROOT=`pwd`
 # In root
 mkdir -p public
 rm -rf public/libs
-cp -r *.zrf client/*.css client/*.html client/libs client/css client/images public
+cp -r *.zrf client/*.html client/libs client/css client/images public
 rm -f public/bin.js
 
 
@@ -22,3 +22,5 @@ cd "$ROOT/client/temp"
 # In root/public
 cd "$ROOT/public"
 google-chrome --disable-web-security index.html
+
+rm -rf public
