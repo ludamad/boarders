@@ -116,11 +116,12 @@ class Piece
 class GameState
     constructor: (rules) ->
         @_rules = rules
-        @_currentPlayer = @_rules._players[0]
+        @_currentPlayerNum = 0
         @_enumOwners = (copy for copy in rules._initialEnumOwners)
         @_enumPieces = (copy for copy in rules._initialEnumPieces)
 
-    currentPlayer: (@_currentPlayer = @_currentPlayer) -> @_currentPlayer
+    currentPlayerNum: (@_currentPlayerNum = @_currentPlayerNum) -> @_currentPlayerNum
+    currentPlayer: () -> @_rules._players[@_currentPlayerNum].id
     rules: () -> @_rules
 
     setPiece: (cell, player, piece) ->
@@ -156,8 +157,13 @@ class GameState
             grid._board = playArea.board grid.id, grid.width(), grid.height()
         playArea.setup()
         for grid in @_rules.grids()
-            @syncPieces(container)
-    syncPieces: (container) ->
+            @syncPieces()
+    endTurn: () ->
+        @_currentPlayerNum++
+        if @_currentPlayerNum >= @_rules._players.length
+            @_currentPlayerNum -= @_rules._players.length
+        @syncPieces()
+    syncPieces: () ->
         for grid in @_rules.grids()
             for cell in grid.cellList()
                 board = grid._board

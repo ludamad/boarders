@@ -30,7 +30,7 @@ setupBreakthrough = (elem) ->
     ai.thinkFunction (game, onFinishThinking) ->
         # Interface with jmarine's AI:
         contents = ["Breakthrough:"]
-        if game.currentPlayer.id == 'white'
+        if game.currentPlayer() == 'white'
             contents.push(1)
         else
             contents.push(2)
@@ -41,16 +41,19 @@ setupBreakthrough = (elem) ->
             else
                 contents.push(' ')
         gameString = contents.join("")
-        runEnginePlayer(5, gameString, onFinishThinking)
+        runEnginePlayer(6, gameString, onFinishThinking)
 
     game = new boarders.GameState(rules)
     playArea = game.setupHtml('board-container')
 
-    ai.think game, (move) ->
-        [from, to] = [move.substring(0,2), move.substring(2,4)]
-        fromCell = game.rules().getCell(from)
-        toCell = game.rules().getCell(to)
-        game.movePiece(fromCell, toCell)
-        game.syncPieces('board-container')
+    queueAI = () ->
+        ai.think game, (move) ->
+            [from, to] = [move.substring(0,2), move.substring(2,4)]
+            fromCell = game.rules().getCell(from)
+            toCell = game.rules().getCell(to)
+            game.movePiece(fromCell, toCell)
+            game.endTurn()
+            queueAI()
+    queueAI()
 
 module.exports = {setupBreakthrough}

@@ -226,51 +226,11 @@ Breakthrough.prototype.evaluateState = function(depth) {
           var pieceValue = this.getPieceValue(pieceType);
           var pieceOwner = this.getPieceOwner(piece);
           var factor = (this.getTurn() == pieceOwner)? 1 : -1;
-          if(pieceOwner == PLAYER1) retval += factor * pieceValue * Math.pow(2, y);
-          else retval += factor * pieceValue * Math.pow(2, 7-y);
+          if(pieceOwner == PLAYER1) retval += factor * pieceValue;
+          else retval += factor * pieceValue;
         }
      }
    } 
-
-   var holeValue = 100;
-   for(x = 0; x < 8; x = x+1) {
-     var player1, player2;
-     var factor = (this.getTurn() == PLAYER1)? 1 : -1;
-
-     // eval holes
-     if(this.getPieceOwner(this.getPiece(x,0)) != PLAYER1) {
-       retval -= factor * holeValue;
-     }
-     if((x==0 || x==7) && this.getPieceOwner(this.getPiece(x,1)) != PLAYER1) {
-       retval -= factor * holeValue/2;
-     }
-
-     if(this.getPieceOwner(this.getPiece(x,7)) != PLAYER2) {
-       retval += factor * holeValue;
-     }
-     if((x==0 || x==7) && this.getPieceOwner(this.getPiece(x,6)) != PLAYER2) {
-       retval += factor * holeValue/2;
-     }
-
-
-     /* eval advanced pieces
-     var advancedValue = 100;
-     for(player1 = 7; player1 >= 0; player1--) {
-       var piece = this.getPiece(x,player1);
-       if(this.getPieceOwner(piece) == PLAYER1) break;
-     }
-     for(player2 = 7; player2 >= 0; player2--) {
-       var piece = this.getPiece(x,7-player2);
-       if(this.getPieceOwner(piece) == PLAYER2) break;
-     }
-     if(player1 > player2) {
-        if(this.getTurn() == PLAYER1) player2 = 0;
-        else player1 = 0;
-     }
-     retval += factor * advancedValue * (player1-player2); 
-     */
-   }
-
    return retval;
 }
 
