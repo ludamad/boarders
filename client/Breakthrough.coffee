@@ -1,7 +1,5 @@
 boarders = require './boarders'
-
-# Exemplify 'raw' boarders usage?
-# Well, we'll be as lazy as possible with making abstractions.
+{runEnginePlayer, stopEnginePlayer} = require './jmarine/ai-spawn'
 
 breakthroughMoveLogic = () ->
     # Used for move generation logic:
@@ -28,7 +26,31 @@ setupBreakthrough = (elem) ->
     rules.boardSetup "pawn", "black", 'a7 b7 c7 d7 e7 f7 g7 h7'.split(' ')
     rules.boardSetup "pawn", "black", 'a8 b8 c8 d8 e8 f8 g8 h8'.split(' ')
 
-    gamestate = new boarders.GameState(rules)
-    playArea = gamestate.setupHtml('board-container')
+    ai = rules.playerAi("Easy")
+    ai.thinkFunction (game, onFinishThinking) ->
+        # Interface with jmarine's AI:
+        contents = ["Breakthrough:"]
+        if game.currentPlayer.id == 'white'
+            contents.push(1)
+        else
+            contents.push(2)
+        for piece in game.pieces()
+            if piece?
+                {owner} = piece
+                contents.push(if owner.id == 'white' then 'P' else 'p')
+            else
+                contents.push(' ')
+        gameString = contents.join("")
+        runEnginePlayer(5, gameString, onFinishThinking)
+
+    game = new boarders.GameState(rules)
+    playArea = game.setupHtml('board-container')
+
+    ai.think game, (move) ->
+        [from, to] = [move.substring(0,2), move.substring(2,4)]
+        fromCell = game.rules().getCell(from)
+        toCell = game.rules().getCell(to)
+        game.movePiece(fromCell, toCell)
+        game.syncPieces('board-container')
 
 module.exports = {setupBreakthrough}

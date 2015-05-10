@@ -31,19 +31,23 @@ stringListCast = (players) ->
 # which the ZRF object model is compiled to,
 # and which the Boarders API emits. (Architecture is hard)
 
-# This is user facing code, use getters and underscored members:
 class Enumerator
-    constructor: (@_next = 0) ->
-    next: () -> return (@_next++)
-    total: () -> @_next
+    constructor: () ->
+        @list = []
+    push: (obj) ->
+        obj.enumId(@list.length)
+        @list.push(obj)
+
+    total: () -> @list.length
 
 # This is user facing code, use getters and underscored members:
 class Cell
-    constructor: (@id, @_x = null, @_y = null) ->
+    constructor: (@id, @_parent, @_x = null, @_y = null) ->
         @_directions = {}
     enumId: (@_enumId = @_enumId) -> @_enumId
     x: (@_x = @_x) -> @_x
     y: (@_y = @_y) -> @_y
+    parent: () -> @_parent
     next: (dir, val = @_directions[dir]) -> 
         @_directions[dir] = val;
         return @_directions[dir]
@@ -56,7 +60,7 @@ class Graph # Base class
     # a bunch of indices:
     _enumerateCells: (enumerator) ->
         for cell in @cellList()
-            cell.enumId(enumerator.next())
+            enumerator.push(cell)
     _enumerateDir: (enumerator, dir) ->
         @_directions[dir] = (-1 for _ in [0..enumerator.total()-1])
         for cell in @cellList()
@@ -68,7 +72,7 @@ class Graph # Base class
 class Grid extends Graph
     constructor: (@id, @_width, @_height, cellIds) ->
        mkRow = (y, w) -> 
-           return (new Cell(cellIds(x, y), x, y) for x in [0 .. w - 1])
+           return (new Cell(cellIds(x, y), @, x, y) for x in [0 .. w - 1])
        @_cells = (mkRow(y, @width()) for y in [0 .. @height() - 1])
 
     defineDirection: (name, mapping) ->
@@ -112,26 +116,91 @@ class Piece
 class GameState
     constructor: (rules) ->
         @_rules = rules
+        @_currentPlayer = @_rules._players[0]
         @_enumOwners = (copy for copy in rules._initialEnumOwners)
         @_enumPieces = (copy for copy in rules._initialEnumPieces)
+
+    currentPlayer: (@_currentPlayer = @_currentPlayer) -> @_currentPlayer
+    rules: () -> @_rules
+
+    setPiece: (cell, player, piece) ->
+        @_enumOwners[cell.enumId()] = player.enumId()
+        @_enumPieces[cell.enumId()] = piece.enumId()
+    getPieceOwner: (cell) ->
+        return @_rules._players[ @_enumOwners[cell.enumId()] ]
+    getPieceType: (cell) ->
+        eId = @_enumPieces[cell.enumId()] 
+        if eId == -1 then return null
+        return @_rules._players[eId]
+    movePiece: (cell1, cell2) ->
+        @_enumOwners[cell2.enumId()] = @_enumOwners[cell1.enumId()] 
+        @_enumPieces[cell2.enumId()] = @_enumPieces[cell1.enumId()]
+        @_enumOwners[cell1.enumId()] = -1
+        @_enumPieces[cell1.enumId()] = -1
+ 
+    pieces: () ->
+        pieces = []
+        for i in [0..@_enumOwners.length-1]
+            owner = @_rules._players[@_enumOwners[i]]
+            typeEnum = @_enumPieces[i]
+            if typeEnum == -1
+                pieces.push null
+            else
+                cell = @_rules.cellList()[i]
+                pieces.push {owner, type: @_rules._pieces[typeEnum], x: cell.x(), y: cell.y()}
+        return pieces
+
     setupHtml: (container) ->
         playArea = new anyboard.HtmlPlayArea(container)
         for grid in @_rules.grids()
-            board = playArea.board grid.id, grid.width(), grid.height()
+            grid._board = playArea.board grid.id, grid.width(), grid.height()
         playArea.setup()
         for grid in @_rules.grids()
+            @syncPieces(container)
+    syncPieces: (container) ->
+        for grid in @_rules.grids()
             for cell in grid.cellList()
+                board = grid._board
+                htmlPiece = board.getPiece(cell.x(), cell.y())
                 enumPiece = @_enumPieces[cell.enumId()]
-                if enumPiece == -1
+                if enumPiece == -1 
+                    if htmlPiece?
+                        board.setPiece cell.x(), cell.y(), null
                     continue
                 enumOwner = @_enumOwners[cell.enumId()]
                 owner = @_rules._players[enumOwner].id
                 piece = @_rules._pieces[enumPiece]
                 img = piece.image(owner)
-                board.piece img, cell.x(), cell.y()
-        return playArea
+                if htmlPiece?
+                    htmlPiece.imageFile(img)
+                else 
+                    board.setPiece(cell.x(), cell.y(), img)
 
-algebraic = (x, y) ->
+class LocalPlayer
+    (@playerId, @game) ->
+
+    isLocalPlayer: () -> true
+    onTurnStart: (onMove) ->
+        
+class EnginePlayer
+    (@playerId, @game, @ai) ->
+    isLocalPlayer: () -> false
+    onTurnStart: (onMove) ->
+        @ai.think(game, onMove)
+ 
+class NetworkPlayer
+    (@playerId) ->
+        @undoConfirmed = false
+    onTurnStart: (onMove) ->
+
+class PlayerAi
+    constructor: (@id) ->
+    thinkFunction: (@_thinkFunc = @_thinkFunc) -> @_thinkFunc
+    think: (game, onFinishThinking) ->
+        @_thinkFunc(game, onFinishThinking)
+
+# Default naming scheme, because chess:
+algebraicCellNamingScheme = (x, y) ->
     return "#{String.fromCharCode 97 + x}#{1 + y}"
 
 # Game rules object.
@@ -139,6 +208,7 @@ algebraic = (x, y) ->
 class Rules 
     constructor: () ->
         @_cellEnumerator = new Enumerator()
+        @_playerAis = []
         @_players = []
         @_grids = []
         @_turnsCanPass = false
@@ -162,6 +232,7 @@ class Rules
         @_initialEnumPieces = (-1 for _ in [0..@_cellEnumerator.total()-1])
         @_initialEnumOwners = (-1 for _ in [0..@_cellEnumerator.total()-1])
 
+    cellList: () -> @_cellEnumerator.list
     boardSetup: (pieceId, playerId, cellIds) ->
         @_ensureFinalized()
         cellIds = stringListCast(cellIds) # Ensure list
@@ -170,19 +241,25 @@ class Rules
             @_initialEnumPieces[cell.enumId()] = @getPiece(pieceId).enumId()
             @_initialEnumOwners[cell.enumId()] = @getPlayer(playerId).enumId()
 
+    playerAi: (id) -> 
+        ai = new PlayerAi(id)
+        @_playerAis.push(ai)
+        return ai
+
     piece: (id) -> 
         @_ensureNotFinalized()
         piece = new Piece(id)
         piece.enumId(@_pieces.length)
         @_pieces.push(piece)
         return piece
+
     player: (id) -> 
         @_ensureNotFinalized()
         player = new Player(id)
         player.enumId(@_players.length)
         @_players.push(player)
         return player
-    grid: (name, w, h, cellNames = algebraic) ->
+    grid: (name, w, h, cellNames = algebraicCellNamingScheme) ->
         @_ensureNotFinalized()
         grid = new Grid(name, w, h, cellNames)
         @_grids.push(grid)

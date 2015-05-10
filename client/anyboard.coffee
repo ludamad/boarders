@@ -30,11 +30,17 @@ class HtmlStack
     constructor: (@player, @piece, @amount = 0) ->
 
 class HtmlPiece
-    constructor: (imgFile, w, h) ->
+    constructor: (@_imageFile, @_w, @_h) ->
         @elem = $("<img>")
-        @elem.attr 'src',   imgFile
+        @elem.attr 'src',   @_imageFile
         @elem.attr 'class', CSS.piece
-        @elem.attr 'style', "width: #{w}px; height: #{h}px;"
+        @elem.attr 'style', "width: #{@_w}px; height: #{@_h}px;"
+    imageFile: (file) -> 
+        if file?
+            @elem.attr 'src', file
+            @_imageFile = file
+        return @_imageFile
+
 
 class HtmlBoard
     constructor: (@boardId, @width, @height) ->
@@ -48,20 +54,18 @@ class HtmlBoard
 
     _getId: (x, y) ->
         return "#{@boardId}-#{x + 1}-#{y + 1}"
-    piece: (img, x, y) ->
-        piece = new HtmlPiece(img, @sqrWidth, @sqrHeight)
+    getPiece: (x, y) -> @pieces[y][x]
+    setPiece: (x, y, piece) ->
+        if typeof piece == 'string'
+            piece = new HtmlPiece(piece, @sqrWidth, @sqrHeight)
         @pieces[y][x] = piece
         @_getElem(x, y).empty()
-        @_getElem(x, y).append(piece.elem)
-        return piece
-
+        if piece?
+            @_getElem(x, y).append(piece.elem)
     movePiece: (x1, y1, x2, y2) ->
-        piece = @pieces[y1][x1]
-        @pieces[y1][x1] = null
-        @pieces[y2][x2] = piece
-        @_getElem(x1, y1).empty()
-        @_getElem(x2, y2).empty()
-        @_getElem(x2, y2).append(piece.elem)
+        piece = @getPiece(x1, y1)
+        @setPiece(x1, y1, null)
+        @setPiece(x2, y2, piece)
 
     render: () ->
         html = ''
