@@ -42,9 +42,27 @@ class HtmlBoard
         @elem = $('#' + @boardId)
         @sqrWidth = (parseInt(@elem.width(), 10)) / @width
         @sqrHeight = @sqrWidth # Square squares for now. Makes sense.
+        @pieces = ((null for _ in [0..@width-1]) for _ in [0..@height-1])
+        @draggedPiece = null
+        @selectedSquare = null
 
     _getId: (x, y) ->
         return "#{@boardId}-#{x + 1}-#{y + 1}"
+    piece: (img, x, y) ->
+        piece = new HtmlPiece(img, @sqrWidth, @sqrHeight)
+        @pieces[y][x] = piece
+        @_getElem(x, y).empty()
+        @_getElem(x, y).append(piece.elem)
+        return piece
+
+    movePiece: (x1, y1, x2, y2) ->
+        piece = @pieces[y1][x1]
+        @pieces[y1][x1] = null
+        @pieces[y2][x2] = piece
+        @_getElem(x1, y1).empty()
+        @_getElem(x2, y2).empty()
+        @_getElem(x2, y2).append(piece.elem)
+
     render: () ->
         html = ''
         squareColor = 'white'
@@ -78,16 +96,34 @@ class HtmlBoard
 
     setup: () ->
          @render()
+         self = @
          startHover = () -> 
-             $(@).css 'border', '2px solid black'
+             x = parseInt($(@).attr 'data-x')
+             y = parseInt($(@).attr 'data-y')
+             if self.selectedSquare != @
+                if (self.pieces[y][x]?) == (self.selectedSquare?)
+                    $(@).css 'border', '2px solid #aa0000'
+                else
+                    $(@).css 'border', '2px solid #00ff00'
          endHover = () ->
-             $(@).css 'border', '2px solid transparent'
+             if self.selectedSquare != @
+                $(@).css 'border', '2px solid transparent'
          onClick = () ->
-             #piece = new HtmlPiece('images/TicTacToe/TTTX.png', @squareSize, @squareSize)
-             $(@).append(piece.elem)
              x = parseInt($(@).attr 'data-x')
              y = parseInt($(@).attr 'data-y')
 
+             if self.selectedSquare?
+                 xFrom = parseInt($(self.selectedSquare).attr 'data-x')
+                 yFrom = parseInt($(self.selectedSquare).attr 'data-y')
+                 $(self.selectedSquare).css 'border', '2px solid transparent'
+                 self.movePiece(xFrom, yFrom, x, y)
+                 self.selectedSquare = null
+                 $(@).css 'border', '2px solid transparent'
+             else if self.pieces[y][x]?
+                 if self.selectedSquare?
+                     $(self.selectedSquare).css 'border', '2px solid transparent'
+                 self.selectedSquare = @
+                 $(@).css 'border', '2px solid #00ff00'
          $('.' + CSS.square).hover(startHover, endHover)
          $('.' + CSS.square).click(onClick)
  
@@ -103,6 +139,7 @@ class HtmlPlayArea
     board: (id, w, h) -> 
         board = new HtmlBoard(id, w, h)
         @boards.push(board)
+        return board
     setup: () ->
         for board in @boards
             board.setup()
