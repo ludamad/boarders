@@ -41,37 +41,61 @@ class HtmlPiece
             @_imageFile = file
         return @_imageFile
 
+class HtmlCell
+    constructor: (@x, @y, @width, @height, @squareColor) ->
+        # Create initial div:
+        @elem = $("<div>")
+        @elem.attr 'class', "#{CSS.square} #{CSS[@squareColor]}" 
+        @elem.css 'width', "#{@width}px"
+        @elem.css 'height', "#{@height}px"
+        @elem.attr 'data-x', @x.toString()
+        @elem.attr 'data-y', @y.toString()
+        @gridCell = null # Set by boarders.coffee
+        @_piece = null
+
+    movePiece: (destCell) ->
+        destCell.setPiece @piece()
+        @piece(null)
+
+    piece: (piece) ->
+        if typeof piece == 'undefined'
+            return @_piece
+        if typeof piece == 'string'
+            piece = new HtmlPiece(piece, @width, @height)
+        @_piece = piece
+        @elem.empty()
+        if piece?
+            @elem.append(piece.elem)
+        return @_piece
+
+    highlightReset: () ->
+        @elem.css 'box-shadow', ''
+    highlightHover: () ->
+        @elem.css 'box-shadow', 'inset 0 0 3px 3px green'
+    highlightSelected: () ->
+        @elem.css 'box-shadow', 'inset 0 0 3px 3px green'
 
 class HtmlBoard
     constructor: (@boardId, @width, @height) ->
-        @orientation = 'white'
+        @orientation = 'black'
         @elem = $('#' + @boardId)
         @sqrWidth = (parseInt(@elem.width(), 10)) / @width
         @sqrHeight = @sqrWidth # Square squares for now. Makes sense.
-        @pieces = ((null for _ in [0..@width-1]) for _ in [0..@height-1])
+        @cells = ((null for _ in [0..@width-1]) for _ in [0..@height-1])
         @draggedPiece = null
-        @selectedSquare = null
 
-    _getId: (x, y) ->
-        return "#{@boardId}-#{x + 1}-#{y + 1}"
-    getPiece: (x, y) -> @pieces[y][x]
+    getCellFromCell: (cell) ->
+        return @getCell(cell.x, cell.y)
+    getPiece: (x, y) ->
+        return @getCell(x, y).piece()
     setPiece: (x, y, piece) ->
-        if typeof piece == 'string'
-            piece = new HtmlPiece(piece, @sqrWidth, @sqrHeight)
-        @pieces[y][x] = piece
-        @_getElem(x, y).empty()
-        if piece?
-            @_getElem(x, y).append(piece.elem)
+        @getCell(x, y).piece(piece)
     movePiece: (x1, y1, x2, y2) ->
-        piece = @getPiece(x1, y1)
-        @setPiece(x1, y1, null)
-        @setPiece(x2, y2, piece)
+        @getCell(x1, y1).movePiece(@getCell x2, y2)
 
-    render: () ->
-        html = ''
+    setup: () ->
+        @elem.empty()
         squareColor = 'white'
-        row = (if @orientation == 'black' then 1 else 8)
-
         for y in [0..@height-1]
             rowIds = []
             # Start the row:
@@ -79,60 +103,39 @@ class HtmlBoard
             rowEl.attr "class", CSS.row
             startColor = squareColor
             for x in [0..@width-1]
-                # Create initial div:
-                squareEl = $("<div>")
-                squareEl.attr 'class', "#{CSS.square} #{CSS[squareColor]}" 
-                squareEl.css 'width', "#{@sqrWidth - 4}px"
-                squareEl.css 'height', "#{@sqrHeight - 4}px"
-                squareEl.attr 'id', @_getId(x, y)
-                squareEl.attr 'data-x', x.toString()
-                squareEl.attr 'data-y', y.toString()
-                rowEl.append(squareEl)
+                cell = new HtmlCell(x, y, @sqrWidth, @sqrHeight, squareColor)
+                @cells[y][x] = cell
+                if @orientation == 'white' 
+                    rowEl.append(cell.elem)
+                else
+                    rowEl.prepend(cell.elem)
 
                 squareColor = if squareColor == 'white' then 'black' else 'white'
 
             # Finish the row:
             rowEl.append $("<div class=#{CSS.clearfix}>")
             squareColor = if startColor == 'white' then 'black' else 'white'
-            if @orientation == 'white' then row-- else row++
-            html += rowEl.html()
-        @elem.html(html)
+            if @orientation == 'white' 
+                @elem.append rowEl
+            else
+                @elem.prepend rowEl
 
-    setup: () ->
-         @render()
+    _createDomCallbackFromCellFunc: (f) ->
          self = @
-         startHover = () -> 
+         return () ->
              x = parseInt($(@).attr 'data-x')
              y = parseInt($(@).attr 'data-y')
-             if self.selectedSquare != @
-                if (self.pieces[y][x]?) == (self.selectedSquare?)
-                    $(@).css 'border', '2px solid #aa0000'
-                else
-                    $(@).css 'border', '2px solid #00ff00'
-         endHover = () ->
-             if self.selectedSquare != @
-                $(@).css 'border', '2px solid transparent'
-         onClick = () ->
-             x = parseInt($(@).attr 'data-x')
-             y = parseInt($(@).attr 'data-y')
+             cell = self.getCell(x,y)
+             f(self, cell)
 
-             if self.selectedSquare?
-                 xFrom = parseInt($(self.selectedSquare).attr 'data-x')
-                 yFrom = parseInt($(self.selectedSquare).attr 'data-y')
-                 $(self.selectedSquare).css 'border', '2px solid transparent'
-                 self.movePiece(xFrom, yFrom, x, y)
-                 self.selectedSquare = null
-                 $(@).css 'border', '2px solid transparent'
-             else if self.pieces[y][x]?
-                 if self.selectedSquare?
-                     $(self.selectedSquare).css 'border', '2px solid transparent'
-                 self.selectedSquare = @
-                 $(@).css 'border', '2px solid #00ff00'
-         $('.' + CSS.square).hover(startHover, endHover)
-         $('.' + CSS.square).click(onClick)
+    onCellClick: (f) ->
+         @elem.find('.' + CSS.square).click(@_createDomCallbackFromCellFunc(f))
+    onCellHover: (startHoverF, endHoverF) ->
+         startHoverDom = @_createDomCallbackFromCellFunc(startHoverF)
+         endHoverDom = @_createDomCallbackFromCellFunc(endHoverF)
+         @elem.find('.' + CSS.square).hover(startHoverDom, endHoverDom)
  
-     _getElem: (x, y) -> $('#' + @_getId(x, y))
-     set: (x, y, image) ->
+    getCell: (x, y) -> @cells[y][x]
 
 # Composed of some number of boards and stacks, for now
 class HtmlPlayArea
@@ -144,6 +147,12 @@ class HtmlPlayArea
         board = new HtmlBoard(id, w, h)
         @boards.push(board)
         return board
+    onCellClick: (f) ->
+        for board in @boards
+            board.onCellClick(f)
+    onCellHover: (startHoverF, endHoverF) ->
+        for board in @boards
+            board.onCellHover(startHoverF, endHoverF)
     setup: () ->
         for board in @boards
             board.setup()

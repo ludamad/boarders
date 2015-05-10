@@ -85,7 +85,11 @@ class Grid extends Graph
                 list.push(cell)
         return list
 
-    getCell: (id) ->
+    getCell: (id, yIfIdIsX) ->
+        # Case 1: getCell(x, y)
+        if typeof id == 'number'
+            return @_cells[yIfIdIsX][id]
+        # Case 2: getCell(id)
         for row in @_cells
             for cell in row
                 if cell.id == id
@@ -156,31 +160,38 @@ class GameState
         for grid in @_rules.grids()
             grid._board = playArea.board grid.id, grid.width(), grid.height()
         playArea.setup()
+
+        # Link the representations for easy end-user manipulation:
+        for grid in @_rules.grids()
+            grid._board.grid = grid
+            for y in [0..grid.height()-1]
+                for x in [0..grid.width()-1]
+                    grid._board.getCell(x,y).gridCell = grid.getCell(x,y)
+                    grid.getCell(x,y).uiCell = grid._board.getCell(x,y)
         for grid in @_rules.grids()
             @syncPieces()
+        return playArea
     endTurn: () ->
         @_currentPlayerNum++
         if @_currentPlayerNum >= @_rules._players.length
             @_currentPlayerNum -= @_rules._players.length
         @syncPieces()
     syncPieces: () ->
-        for grid in @_rules.grids()
-            for cell in grid.cellList()
-                board = grid._board
-                htmlPiece = board.getPiece(cell.x(), cell.y())
-                enumPiece = @_enumPieces[cell.enumId()]
-                if enumPiece == -1 
-                    if htmlPiece?
-                        board.setPiece cell.x(), cell.y(), null
-                    continue
-                enumOwner = @_enumOwners[cell.enumId()]
-                owner = @_rules._players[enumOwner].id
-                piece = @_rules._pieces[enumPiece]
-                img = piece.image(owner)
-                if htmlPiece?
-                    htmlPiece.imageFile(img)
-                else 
-                    board.setPiece(cell.x(), cell.y(), img)
+        for cell in @_rules.cellList()
+            enumPiece = @_enumPieces[cell.enumId()]
+            enumOwner = @_enumOwners[cell.enumId()]
+            if enumPiece == -1 
+                cell.uiCell.piece(null)
+                continue
+            owner = @_rules._players[enumOwner].id
+            piece = @_rules._pieces[enumPiece]
+            img = piece.image(owner)
+            htmlPiece = cell.uiCell.piece()
+            # Avoid creating a new image element if necessary, slight gain:
+            if htmlPiece?
+                htmlPiece.imageFile(img)
+            else
+                cell.uiCell.piece(img)
 
 class LocalPlayer
     (@playerId, @game) ->

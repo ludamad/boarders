@@ -9,6 +9,7 @@ breakthroughMoveLogic = () ->
         {white: 'forward-right', black: 'backward-right', canCapture: true} 
     ]
 
+# More or less takes control of the game and UI logic.
 setupBreakthrough = (elem) ->
     rules = new boarders.Rules()
     rules.player "white"
@@ -48,12 +49,30 @@ setupBreakthrough = (elem) ->
 
     queueAI = () ->
         ai.think game, (move) ->
+            if not move? then return
             [from, to] = [move.substring(0,2), move.substring(2,4)]
             fromCell = game.rules().getCell(from)
             toCell = game.rules().getCell(to)
             game.movePiece(fromCell, toCell)
             game.endTurn()
+            #queueAI()
+
+    selectedCell = null
+    playArea.onCellClick (board, cell) ->
+        if selectedCell? and selectedCell != cell
+            game.movePiece(selectedCell.gridCell, cell.gridCell)
+            game.endTurn()
             queueAI()
-    queueAI()
+            selectedCell.highlightReset()
+            selectedCell = null
+        else if cell.piece()?
+            selectedCell = cell
+            selectedCell.highlightSelected()
+
+    playArea.onCellHover ( (board, cell) ->
+            cell.highlightHover() ),
+        (board, cell) -> 
+            if cell != selectedCell
+                cell.highlightReset()
 
 module.exports = {setupBreakthrough}
