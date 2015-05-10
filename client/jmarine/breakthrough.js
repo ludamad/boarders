@@ -207,7 +207,6 @@ Breakthrough.prototype.getPieceValue = function(pieceType) {
 }
 
 Breakthrough.prototype.evaluateState = function(depth) {
-   var x,y;
    var retval = 0;
 
    var winner = this.getWinner();
@@ -218,19 +217,47 @@ Breakthrough.prototype.evaluateState = function(depth) {
    } 
 
    // balance of power 
-   for(y = 0; y < 8; y++) {
-     for(x = 0; x < 8; x++) {
+   var balance = 0;
+   for(var y = 0; y < 8; y++) {
+     for(var x = 0; x < 8; x++) {
         var piece = this.getPiece(x,y);
-        if(piece != NONE) {
-          var pieceType = this.getPieceType(piece);
-          var pieceValue = this.getPieceValue(pieceType);
-          var pieceOwner = this.getPieceOwner(piece);
-          var factor = (this.getTurn() == pieceOwner)? 1 : -1;
-          if(pieceOwner == PLAYER1) retval += factor * pieceValue;
-          else retval += factor * pieceValue;
+        if (piece != NONE) {
+           var pieceOwner = this.getPieceOwner(piece);
+           if (pieceOwner == PLAYER1) {
+              // Are we in a sacred square?
+              if (y == 0 && x != 0 && x != 3 && x != 4 && x != 7) {
+                balance += 50;
+              }
+              // Sides are bad.
+              if (x == 0 || x == 7) balance -= 10;
+              balance += y * 5
+              if (y >= 3) {
+                  balance += y * 5
+              }
+              if (x >= 2 && x <= 5) 
+                  balance += y * 5;
+              balance += 100;
+           } else {
+              // Are we in a sacred square?
+              if (y == 7 && x != 0 && x != 3 && x != 4 && x != 7) {
+                  balance -= 50;
+              }
+              // Sides are bad.
+              if (x == 0 || x == 7) balance += 10;
+
+              // Advancing is good.
+              if (x >= 2 && x <= 5) 
+                  balance -= (7-y) * 5;
+              balance -= (7-y) * 5;
+              if (y <= 7 - 3) {
+                  balance -= (7-y) * 5;
+              }
+              balance -= 100;
+          }
         }
      }
    } 
+   retval += this.getTurn() == PLAYER1 ? balance : -balance;
    return retval;
 }
 

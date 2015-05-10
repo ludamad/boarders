@@ -41,7 +41,7 @@ setupBreakthrough = (elem) ->
             else
                 contents.push(' ')
         gameString = contents.join("")
-        runEnginePlayer(6, gameString, onFinishThinking)
+        runEnginePlayer(5, gameString, onFinishThinking)
 
     game = new boarders.GameState(rules)
     playArea = game.setupHtml('board-container')
