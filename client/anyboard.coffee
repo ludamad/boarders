@@ -24,6 +24,47 @@ cfg = {
 }
 
 # All the game information required for display:
+class HtmlPlayerInfoBlock
+    _formatTime: (remaining) ->
+        hours = Math.floor(remaining / 3600)
+        remaining = remaining % 3600
+        mins = Math.floor(remaining / 60)
+        secs = remaining % 60
+        return "#{hours}:#{mins}:#{secs}"
+
+    constructor: (userName, playerName, timeLeft) ->
+        @elem = $("<div>")
+        @elem.addClass('btn player disabled btn-success')
+        @elem.css 'float', 'right'
+        @_nameElem = $("<p>")
+        @elem.append(@_nameElem)
+        @_playerElem = $("<p>")
+        @elem.append(@_playerElem)
+        @_timeElem = $("<p>")
+        @_timeElem.addClass("time")
+        @elem.append(@_timeElem)
+        @userName(userName)
+        @playerName(playerName)
+        @timeLeft(timeLeft)
+        @_isCurrentPlayer = false
+
+    timeLeft: (@_timeLeft = @_timeLeft) ->
+        @_timeElem.text(@_formatTime @_timeLeft) 
+        return @_timeLeft
+    playerName: (@_playerName = @_playerName) ->
+        @_playerElem.text(@_playerName) 
+        return @_playerName
+    userName: (@_userName = @_userName) ->
+        @_nameElem.text(@_userName) 
+        return @_userName
+    isCurrentPlayer: (isCurrentPlayer) ->
+        if isCurrentPlayer? 
+            @_isCurrentPlayer = isCurrentPlayer
+            if isCurrentPlayer
+                @elem.addClass('disabled')
+            else
+                @elem.removeClass('disabled')
+        return @_isCurrentPlayer
 
 # Pieces that can be played, outside of the board
 class HtmlStack
@@ -54,7 +95,7 @@ class HtmlCell
         @_piece = null
 
     movePiece: (destCell) ->
-        destCell.setPiece @piece()
+        destCell.piece @piece()
         @piece(null)
 
     piece: (piece) ->
@@ -142,7 +183,12 @@ class HtmlPlayArea
     constructor: (elem) ->
         @elem = $('#' + elem) 
         @boards = []
-        @pieceStacks = {}
+        @pieceStacks = []
+        @pInfoBlocks = []
+        @pInfoBlocks.push new HtmlPlayerInfoBlock('ludamad', 'white', 50)
+        @pInfoBlocks.push new HtmlPlayerInfoBlock('not ludamad', 'black', 50)
+        for info in @pInfoBlocks
+            @elem.find('#timers').append(info.elem)
     board: (id, w, h) -> 
         board = new HtmlBoard(id, w, h)
         @boards.push(board)

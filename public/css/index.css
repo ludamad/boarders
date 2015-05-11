@@ -4,25 +4,27 @@
   color:#2E313F;
 }
 
-.container1 {
-  width: 40%;
-  margin: 20px;
+.player {
+    background: #ccc;
+    font-family: sans-serif;
+    border-radius: 6px;
+    margin: 10px; 
+    float: bottom;
+    position: relative;
 }
- 
-.container2 {
-  width: 50%;
-  margin: 20px;
+
+.player .name {
+    font-size: 16px;
 }
- 
-.container3 {
-  width: 60%;
-  margin: 20px;
+
+.player .time {
+    line-height: 1;
+    margin-bottom: 0;
+    font-size: 60px;
 }
- 
-.message2 {
-  font-size: 13px;
-  font-family: Arial, sans-serif;
-  letter-spacing: 1px;
+
+.timefield {
+    width: 40px;
 }
 
 #board-container {
@@ -30,16 +32,24 @@
 
 /* clearfix */
 .clearfix-7da63 {
-  clear: both;
+  clear: both; 
 }
 
 /* board */
 .board-b72b1 {
   overflow: hidden;
+  float: left;
+  position: relative;
+
   border: 2px solid #404040;
   -webkit-box-sizing: content-box;
   -moz-box-sizing: content-box;
   box-sizing: content-box;
+}
+
+.timers {
+  float: right;
+  position: relative;
 }
 
 /* square */
@@ -132,6 +142,7 @@ span#pgn{
   max-width:197px;
 }
 .board-b72b1 {
+  float: left;
   border: 15px outset #756563;
 }
 /* white square */

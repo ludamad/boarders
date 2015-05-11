@@ -27,6 +27,14 @@ setupBreakthrough = (elem) ->
     rules.boardSetup "pawn", "black", 'a7 b7 c7 d7 e7 f7 g7 h7'.split(' ')
     rules.boardSetup "pawn", "black", 'a8 b8 c8 d8 e8 f8 g8 h8'.split(' ')
 
+    rules.direction 'board-1', 'forward-left',  -1,  1
+    rules.direction 'board-1', 'forward',        0,  1
+    rules.direction 'board-1', 'forward-right',  1,  1
+
+    rules.direction 'board-1', 'backward-left', -1, -1
+    rules.direction 'board-1', 'backward',       0, -1
+    rules.direction 'board-1', 'backward-right', 1, -1
+
     ai = rules.playerAi("Easy")
     ai.thinkFunction (game, onFinishThinking) ->
         # Interface with jmarine's AI:
@@ -55,7 +63,11 @@ setupBreakthrough = (elem) ->
             toCell = game.rules().getCell(to)
             game.movePiece(fromCell, toCell)
             game.endTurn()
-            #queueAI()
+
+    moveGenerator = () ->
+        for cell in @_rules.cellList()
+            if @game.hasPiece(cell)?
+                next = cell.next('forward')
 
     selectedCell = null
     playArea.onCellClick (board, cell) ->

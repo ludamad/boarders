@@ -75,9 +75,12 @@ class Grid extends Graph
            return (new Cell(cellIds(x, y), @, x, y) for x in [0 .. w - 1])
        @_cells = (mkRow(y, @width()) for y in [0 .. @height() - 1])
 
-    defineDirection: (name, mapping) ->
-        for cell in @cellList()
-            mapping(cell)
+    direction: (name, dx, dy) ->
+        for y in [0..@height()-1]
+            for x in [0..@width()-1]
+                if @getCell(x+dx,y+dy)?
+                    @getCell(x, y).next name, @getCell(x+dx, y+dy)
+
     cellList: () ->
         list = []
         for row in @_cells
@@ -88,7 +91,7 @@ class Grid extends Graph
     getCell: (id, yIfIdIsX) ->
         # Case 1: getCell(x, y)
         if typeof id == 'number'
-            return @_cells[yIfIdIsX][id]
+            return @_cells[yIfIdIsX]?[id]
         # Case 2: getCell(id)
         for row in @_cells
             for cell in row
@@ -99,6 +102,10 @@ class Grid extends Graph
     # At least coffee makes writing getter-setters bearable.
     width:  (@_width  = @_width)  -> @_width
     height: (@_height = @_height) -> @_height
+
+# This is user facing code, use getters and underscored members:
+class SlideMove
+    constructor: (@_fromCell, @_toCell, @_dragTrigger = false) ->
 
 # This is user facing code, use getters and underscored members:
 class Player
@@ -133,6 +140,7 @@ class GameState
         @_enumPieces[cell.enumId()] = piece.enumId()
     getPieceOwner: (cell) ->
         return @_rules._players[ @_enumOwners[cell.enumId()] ]
+    hasPiece: (cell) -> @getPieceType(cell)?
     getPieceType: (cell) ->
         eId = @_enumPieces[cell.enumId()] 
         if eId == -1 then return null
@@ -142,6 +150,8 @@ class GameState
         @_enumPieces[cell2.enumId()] = @_enumPieces[cell1.enumId()]
         @_enumOwners[cell1.enumId()] = -1
         @_enumPieces[cell1.enumId()] = -1
+        if cell1.uiCell?
+            cell1.uiCell.movePiece(cell2.uiCell)
  
     pieces: () ->
         pieces = []
@@ -235,6 +245,14 @@ class Rules
         @_initialEnumOwners = []
         @_finalized = false
 
+    direction: (grid, name, dx, dy) ->
+        if typeof grid == 'string'
+            grid = @getGrid(grid)
+        for cell in @cellList()
+            # Initialize to empty, guarantees consistent hidden class for
+            # cell objects:
+            cell.next(name, null)
+        grid.direction(name, dx, dy)
     _ensureNotFinalized: () ->
         if @_finalized
             throw new Error("Cannot call after calling rules.finalizeBoardShape()!")
