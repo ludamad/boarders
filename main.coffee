@@ -1,5 +1,3 @@
-M = {}
-global.Boarders = M
 global.print = console.log
 
 express = require('express')
@@ -19,7 +17,7 @@ VERSION_MAJOR = '0'
 VERSION_MINOR = '0'
 VERSION_COUNTER = '0'
 
-M.serverStart = () ->
+exports.serverStart = () ->
     print "#{C.white 'Welcome to'} #{C.green SITE_NAME} #{C.white 'server'} #{C.green "V#{VERSION_MAJOR}.#{VERSION_MINOR}.#{VERSION_COUNTER}"}"
 
     server.listen port, () ->
