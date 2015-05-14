@@ -178,6 +178,13 @@ class HtmlBoard
  
     getCell: (x, y) -> @cells[y][x]
 
+# This is all stuff that could be part of the HtmlPlayArea object
+# but since we can confine its usage here, we do
+#playAreaUiStateMachine = (playArea) ->
+
+    #return {onClick, onHover, addUiTrigger}
+
+
 # Composed of some number of boards and stacks, for now
 class HtmlPlayArea
     constructor: (elem) ->
@@ -187,6 +194,8 @@ class HtmlPlayArea
         @pInfoBlocks = []
         @pInfoBlocks.push new HtmlPlayerInfoBlock('ludamad', 'white', 50)
         @pInfoBlocks.push new HtmlPlayerInfoBlock('not ludamad', 'black', 50)
+        #uiStateMachine = playAreaUiStateMachine(@)
+        #uiStateMachine.addUiTrigger
         for info in @pInfoBlocks
             @elem.find('#timers').append(info.elem)
     board: (id, w, h) -> 
@@ -202,6 +211,9 @@ class HtmlPlayArea
     setup: () ->
         for board in @boards
             board.setup()
+
+    addUiTrigger: ({triggerCells, triggerOnDrag, triggerOnClick}) ->
+
 
 #$.get 'tictactoe.zrf', (content) ->
 #    P = require("./zrfparser")
