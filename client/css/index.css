@@ -8,8 +8,6 @@
     background: #ccc;
     font-family: sans-serif;
     border-radius: 6px;
-    margin: 10px; 
-    float: bottom;
     position: relative;
 }
 
@@ -28,7 +26,8 @@
 }
 
 #board-container {
-  overflow: hidden;
+    display: flex;
+    justify-content: center;
 }
 
 /* clearfix */
@@ -49,8 +48,10 @@
 }
 
 .timers {
-  float: right;
-  position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin: .5em
 }
 
 /* square */
@@ -130,6 +131,7 @@ span#pgn{
   max-width:600px;
   min-width:320px;
   margin:0 auto;
+  padding: 1em;
 }
 #startBtn, #clearBtn, #colorBtn {
   text-align:center;

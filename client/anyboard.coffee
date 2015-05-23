@@ -35,7 +35,6 @@ class HtmlPlayerInfoBlock
     constructor: (userName, playerName, timeLeft) ->
         @elem = $("<div>")
         @elem.addClass('btn player disabled btn-success')
-        @elem.css 'float', 'right'
         @_nameElem = $("<p>")
         @elem.append(@_nameElem)
         @_playerElem = $("<p>")
