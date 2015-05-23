@@ -22,7 +22,7 @@ Ember.Handlebars.helper 'format-date', (date) ->
 # Ember JS wrapping utilities:
 ###############################################################################
 
-App = Ember.Application.create({})
+window.App = Ember.Application.create({})
 
 routes = []
 subRoutes = {}
@@ -32,26 +32,26 @@ subRouteHandlers = {}
 Route = (route, handler) ->
     routes.push(route)
     if handler?
-        App["#{route.toCapitalized()}Route"] = Ember.Route.extend {model: handler}
-        routeHandlers[route] = App["#{route.toCapitalized()}Route"]
+        window.App["#{route.toCapitalized()}Route"] = Ember.Route.extend {model: handler}
+        routeHandlers[route] = window.App["#{route.toCapitalized()}Route"]
     subRoutes[route] = []
     subRouteHandlers[route] = {}
 
 Controller = (route) -> (definition) ->
-    App["#{route.toCapitalized()}Controller"] = Ember.Controller.extend(definition)
+    window.App["#{route.toCapitalized()}Controller"] = Ember.Controller.extend(definition)
 
 ObjectController = (route) -> (definition) ->
-    App["#{route.toCapitalized()}Controller"] = Ember.ObjectController.extend(definition)
+    window.App["#{route.toCapitalized()}Controller"] = Ember.ObjectController.extend(definition)
 
 SubRoute = (str) ->
     [parent, route] = str.split("/")
     subRoutes[parent].push(route)
     if handler?
-        App["#{route.toCapitalized()}Route"] = Ember.Route.extend {model: handler}
-    subRouteHandlers[parent][route] = App["#{route.toCapitalized()}Route"]
+        window.App["#{route.toCapitalized()}Route"] = Ember.Route.extend {model: handler}
+    subRouteHandlers[parent][route] = window.App["#{route.toCapitalized()}Route"]
 
 installRoutes = () ->
-    App.Router.map () ->
+    window.App.Router.map () ->
         for route in routes
             @resource route, () ->
                 for subRoute in subRoutes[route]

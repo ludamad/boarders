@@ -3,25 +3,41 @@
 <head>
   <meta charset="utf-8">
   <title>Boarders</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="css/normalize.css">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/index.css">
-  <link rel="stylesheet" href="css/bootstrap.css">
-  <link href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.no-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css">
 </head>
 <body>
 
+  <nav class="navbar navbar-default">
+    <div class="container-fluid">
+      <div class="navbar-header">
+	<a class="navbar-brand" href="#">Boarders</a>
+      </div>
+      <div>
+	<ul class="nav navbar-nav">
+          <li class="active"><a href="#">Home</a></li>
+           <li><a href="#/library">Library</a></li> 
+          <li><a href="#/games">Games</a></li> 
+	</ul>
+      </div>
+    </div>
+  </nav>
+  
   <div id="board-container"> 
-    <div id="board-1" class="board-b72b1" style="width: 512px; height: 512px;"> 
+    <div id="board-1" class="board-b72b1" style="width: 30em; "> 
     </div>
     <div id="timers" class="timers">
     </div>
   </div>
 
-  <div class="btn-wrapper">
-      <input class="game-button" type="button" id="startBtn" value="Request Undo" />
-      <input class="game-button" type="button" id="clearBtn" value="Flip View" />
-      <input class="game-button" type="button" id="colorBtn" value="Resign" />
+  <div id="board-btn-container" class="btn-group">
+      <input class="btn btn-default btn-lg center-block" type="button" id="startBtn" value="Request Undo" />
+      <input class="btn btn-default btn-lg center-block" type="button" id="clearBtn" value="Flip View" />
+      <input class="btn btn-default btn-lg center-block" type="button" id="colorBtn" value="Resign" />
   </div>
 
   <script src="libs/jquery-v1.11.1.js"></script>
@@ -29,6 +45,8 @@
   <script src="libs/handlebars-v2.0.0.js"></script>
   <script src="libs/ember-1.9.1.js"></script>
 
+  <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+  
   <script src="http://cdnjs.cloudflare.com/ajax/libs/showdown/0.3.1/showdown.min.js"></script>
   <script src="http://cdnjs.cloudflare.com/ajax/libs/moment.js/2.1.0/moment.min.js"></script>
 

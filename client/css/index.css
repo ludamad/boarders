@@ -27,6 +27,13 @@
 
 #board-container {
     display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+#board-btn-container {
+    display: flex;
+    flex-wrap: wrap;
     justify-content: center;
 }
 
@@ -38,13 +45,7 @@
 /* board */
 .board-b72b1 {
   overflow: hidden;
-  float: left;
-  position: relative;
-
   border: 2px solid #404040;
-  -webkit-box-sizing: content-box;
-  -moz-box-sizing: content-box;
-  box-sizing: content-box;
 }
 
 .timers {
@@ -134,15 +135,16 @@ span#pgn{
   padding: 1em;
 }
 #startBtn, #clearBtn, #colorBtn {
-  text-align:center;
-  position:relative;
-  font-size:1.78em;
-  background:#756563;
-  color: #000001;
-  font-weight:900;  
-  padding:5px;
-  width:197px;  
-  max-width:197px;
+/*   text-align:center; */
+/*   position:relative; */
+/*   font-size:1.78em; */
+/*   background:#756563; */
+/*   color: #000001; */
+/*   font-weight:900;   */
+/*   padding:5px; */
+/*   width:197px;   */
+    /*   max-width:197px; */
+    margin: 0.1em;
 }
 .board-b72b1 {
   float: left;
