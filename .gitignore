@@ -1,4 +1,4 @@
 node_modules
 client/temp
-public/
+build/
 *.sw*

@@ -214,7 +214,6 @@ class HtmlPlayArea
 
     addUiTrigger: ({triggerCells, triggerOnDrag, triggerOnClick}) ->
 
-
 #$.get 'tictactoe.zrf', (content) ->
 #    P = require("./zrfparser")
 #    zrfFile = P.parse(content)

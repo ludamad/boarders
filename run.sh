@@ -3,23 +3,23 @@
 ROOT=`pwd` 
 
 # In root
-mkdir -p public
-rm -rf public/libs
-cp -r *.zrf client/*.html client/libs client/css client/images client/jmarine public
-rm -f public/bin.js
+mkdir -p build
+rm -rf build/libs
+cp -r *.zrf client/*.html client/libs client/css client/images client/jmarine build
+rm -f build/bin.js
 
-rm -rf "$ROOT/client/temp"
-mkdir -p "$ROOT/client/temp"
+rm -rf "$ROOT/build/src"
+mkdir -p "$ROOT/build/src"
 
-cp -r "$ROOT/client/jmarine" "$ROOT/client/"*.coffee "$ROOT/client/"*.js "$ROOT/client/temp"
+cp -r "$ROOT/client/jmarine" "$ROOT/client/"*.coffee "$ROOT/client/"*.js "$ROOT/build/src"
 
-# In root/client/temp
-cd "$ROOT/client/temp"
+# In root/build/src
+cd "$ROOT/build/src"
 "$ROOT/node_modules/.bin/coffee" -c *.coffee jmarine/*.coffee
-"$ROOT/node_modules/.bin/browserify" app.js > "$ROOT/public/bin.js"
+"$ROOT/node_modules/.bin/browserify" app.js > "$ROOT/build/bin.js"
 
-# In root/public
-cd "$ROOT/public"
+# In root/build
+cd "$ROOT/build"
 google-chrome --disable-web-security index.html
 
-rm -rf public
+rm -rf build
