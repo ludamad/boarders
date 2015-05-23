@@ -139,7 +139,7 @@ class GameState
         @_enumOwners[cell.enumId()] = player.enumId()
         @_enumPieces[cell.enumId()] = piece.enumId()
     getPieceOwner: (cell) ->
-        return @_rules._players[ @_enumOwners[cell.enumId()] ]
+        return @_rules._players[ @_enumOwners[cell.enumId()] ].id
     hasPiece: (cell) -> @getPieceType(cell)?
     getPieceType: (cell) ->
         eId = @_enumPieces[cell.enumId()] 

@@ -1,16 +1,8 @@
 boarders = require './boarders'
 {runEnginePlayer, stopEnginePlayer} = require './jmarine/ai-spawn'
 
-breakthroughMoveLogic = () ->
-    # Used for move generation logic:
-    directions = [
-        {white: 'forward-left', black: 'backward-left', canCapture: true} 
-        {white: 'forward', black: 'backward', canCapture: false} 
-        {white: 'forward-right', black: 'backward-right', canCapture: true} 
-    ]
-
 # More or less takes control of the game and UI logic.
-setupBreakthrough = (elem) ->
+setupBreakthrough = () ->
     rules = new boarders.Rules()
     rules.player "white"
     rules.player "black"
@@ -64,17 +56,45 @@ setupBreakthrough = (elem) ->
             game.movePiece(fromCell, toCell)
             game.endTurn()
 
-    moveGenerator = () ->
-        for cell in @_rules.cellList()
-            if @game.hasPiece(cell)?
-                next = cell.next('forward')
+    # Used for move generation logic:
+    MOVE_DIRECTIONS = [
+        {white: 'forward-left', black: 'backward-left', canCapture: true} 
+        {white: 'forward', black: 'backward', canCapture: false} 
+        {white: 'forward-right', black: 'backward-right', canCapture: true} 
+    ]
+
+    validCells = (cell) ->
+        player = game.currentPlayer()
+        cells = []
+        if game.hasPiece(cell)? and game.getPieceOwner(cell) == player
+            for dir in MOVE_DIRECTIONS 
+                next = cell.next(dir[player])
+                if not next?
+                    # Invalid: Direction not defined here
+                    continue
+                if not game.hasPiece(next)
+                    # Valid: Direction defined and empty
+                    cells.push(next)
+                    continue
+                if game.getPieceOwner(next) == player
+                    # Invalid: Direction defined and friendly
+                    continue
+
+                if dir.canCapture
+                    # Valid: Direction defined and enemy and diagonal
+                    cells.push(next)
+                # Invalid: Direction defined and enemy and forward
+        return cells 
 
     selectedCell = null
     playArea.onCellClick (board, cell) ->
         if selectedCell? and selectedCell != cell
-            game.movePiece(selectedCell.gridCell, cell.gridCell)
-            game.endTurn()
-            queueAI()
+            cells = validCells(selectedCell.gridCell) 
+            # Is the move valid?
+            if cell.gridCell in cells
+                game.movePiece(selectedCell.gridCell, cell.gridCell)
+                game.endTurn()
+                queueAI()
             selectedCell.highlightReset()
             selectedCell = null
         else if cell.piece()?
