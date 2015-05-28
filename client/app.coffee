@@ -1,6 +1,7 @@
 anyboard = require "./anyboard"
 {setupBreakthrough} = require "./Breakthrough"
 
+
 ###############################################################################
 # Generic utilities
 ###############################################################################
@@ -22,7 +23,9 @@ Ember.Handlebars.helper 'format-date', (date) ->
 # Ember JS wrapping utilities:
 ###############################################################################
 
-window.App = Ember.Application.create({})
+window.Boarders = Ember.Application.create({LOG_TRANSITIONS: true})
+
+Boarders.ApplicationAdapter = DS.FixtureAdapter.extend();
 
 routes = []
 subRoutes = {}
@@ -32,26 +35,26 @@ subRouteHandlers = {}
 Route = (route, handler) ->
     routes.push(route)
     if handler?
-        window.App["#{route.toCapitalized()}Route"] = Ember.Route.extend {model: handler}
-        routeHandlers[route] = window.App["#{route.toCapitalized()}Route"]
+        Boarders["#{route.toCapitalized()}Route"] = Ember.Route.extend {model: handler}
+        routeHandlers[route] = Boarders["#{route.toCapitalized()}Route"]
     subRoutes[route] = []
     subRouteHandlers[route] = {}
 
 Controller = (route) -> (definition) ->
-    window.App["#{route.toCapitalized()}Controller"] = Ember.Controller.extend(definition)
+    Boarders["#{route.toCapitalized()}Controller"] = Ember.Controller.extend(definition)
 
 ObjectController = (route) -> (definition) ->
-    window.App["#{route.toCapitalized()}Controller"] = Ember.ObjectController.extend(definition)
+    Boarders["#{route.toCapitalized()}Controller"] = Ember.ObjectController.extend(definition)
 
 SubRoute = (str) ->
     [parent, route] = str.split("/")
     subRoutes[parent].push(route)
     if handler?
-        window.App["#{route.toCapitalized()}Route"] = Ember.Route.extend {model: handler}
-    subRouteHandlers[parent][route] = window.App["#{route.toCapitalized()}Route"]
+        Boarders["#{route.toCapitalized()}Route"] = Ember.Route.extend {model: handler}
+    subRouteHandlers[parent][route] = Boarders["#{route.toCapitalized()}Route"]
 
 installRoutes = () ->
-    window.App.Router.map () ->
+    Boarders.Router.map () ->
         for route in routes
             @resource route, () ->
                 for subRoute in subRoutes[route]
@@ -61,19 +64,20 @@ installRoutes = () ->
 # Routes:
 ###############################################################################
 
-Route("lobby") # Handler is TODO
-
 games = null
 
-Route "games", () -> 
-    return $.getJSON("/games").then (obj) ->
-        games = obj 
-        return obj
+# Route "games", () -> 
+#     return $.getJSON("/games").then (obj) ->
+#         games = obj 
+#         return obj
+
+Route "games", () ->
+    return this.store.find('game-instance')
 
 SubRoute("games/game", ({path_id}) -> return games.findBy('id', path_id))
 
-Route "posts", () ->
-    return @store.find 'post'
+Route "library", () ->
+    return @store.find 'game-instance'
 
 installRoutes()
 
@@ -148,6 +152,12 @@ Controller("main") {
         }
 }
 
-# Hackety prototyping:
+models = require "./models/models"
 
-setupBreakthrough()
+Ember.Handlebars.helper("renderBoard", () -> 
+    setupBreakthrough()
+    return ""
+)
+
+# Hackety prototyping:
+#Document onReady in coffeescript

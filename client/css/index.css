@@ -4,6 +4,10 @@
   color:#2E313F;
 }
 
+.nav > li > a:hover {
+  cursor: pointer;
+}
+
 .player {
     background: #ccc;
     font-family: sans-serif;
