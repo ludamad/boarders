@@ -186,8 +186,7 @@ class HtmlBoard
 
 # Composed of some number of boards and stacks, for now
 class HtmlPlayArea
-    constructor: (elem) ->
-        @elem = $('#' + elem) 
+    constructor: (@elem) ->
         @boards = []
         @pieceStacks = []
         @pInfoBlocks = []
@@ -225,5 +224,6 @@ fixImgUrl = (url) ->
     url = url.replace("\\", "/")
     url = url.replace("\.bmp", ".png")
     url = url.replace("\.BMP", ".png")
+
 
 module.exports = {HtmlPlayArea, HtmlBoard}

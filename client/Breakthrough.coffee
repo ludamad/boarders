@@ -2,7 +2,7 @@ boarders = require './boarders'
 {runEnginePlayer, stopEnginePlayer} = require './jmarine/ai-spawn'
 
 # More or less takes control of the game and UI logic.
-setupBreakthrough = () ->
+setupBreakthrough = (elem) ->
     rules = new boarders.Rules()
     rules.player "white"
     rules.player "black"
@@ -45,7 +45,6 @@ setupBreakthrough = () ->
         runEnginePlayer(5, gameString, onFinishThinking)
 
     game = new boarders.GameState(rules)
-    playArea = game.setupHtml('board-container')
 
     queueAI = () ->
         ai.think game, (move) ->
@@ -87,13 +86,16 @@ setupBreakthrough = () ->
         return cells 
 
     selectedCell = null
+
+    # Set up the breakthrough board for the current element: 
+    playArea = game.setupHtml(elem)
     playArea.onCellClick (board, cell) ->
         if selectedCell? and selectedCell != cell
             cells = validCells(selectedCell.gridCell) 
             # Is the move valid?
             if cell.gridCell in cells
                 game.movePiece(selectedCell.gridCell, cell.gridCell)
-                game.endTurn()
+                game.endTurn()  
                 queueAI()
             selectedCell.highlightReset()
             selectedCell = null

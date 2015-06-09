@@ -23,7 +23,10 @@ Ember.Handlebars.helper 'format-date', (date) ->
 # Ember JS wrapping utilities:
 ###############################################################################
 
-window.Boarders = Ember.Application.create({LOG_TRANSITIONS: true})
+window.Boarders = Ember.Application.create {
+    LOG_TRANSITIONS: true
+
+}
 
 Boarders.ApplicationAdapter = DS.FixtureAdapter.extend();
 
@@ -45,6 +48,10 @@ Controller = (route) -> (definition) ->
 
 ObjectController = (route) -> (definition) ->
     Boarders["#{route.toCapitalized()}Controller"] = Ember.ObjectController.extend(definition)
+
+
+View = (route) -> (definition) ->
+    Boarders["#{route.toCapitalized()}View"] = Ember.View.extend(definition)
 
 SubRoute = (str) ->
     [parent, route] = str.split("/")
@@ -152,12 +159,15 @@ Controller("main") {
         }
 }
 
+###############################################################################
+# Views:
+###############################################################################
+
+View("index") {
+    didInsertElement: () ->
+        $(".Breakthrough-container").each () ->
+            setupBreakthrough($(@))
+}
+
 models = require "./models/models"
-
-Ember.Handlebars.helper("renderBoard", () -> 
-    setupBreakthrough()
-    return ""
-)
-
-# Hackety prototyping:
-#Document onReady in coffeescript
+   
