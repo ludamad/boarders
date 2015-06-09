@@ -3,6 +3,7 @@ global.print = console.log
 express = require('express')
 app = express()
 app.use(express.static(__dirname + '/build'))
+
 server = require('http').createServer(app)
 io = require('socket.io')(server)
 port = process.env.PORT || 8081
@@ -16,6 +17,10 @@ SITE_NAME = "Boarders"
 VERSION_MAJOR = '0'
 VERSION_MINOR = '0'
 VERSION_COUNTER = '0'
+
+app.post '/', (request, response) ->
+  console.log(request.body)
+  response.send(request.body)
 
 exports.serverStart = () ->
     print "#{C.white 'Welcome to'} #{C.green SITE_NAME} #{C.white 'server'} #{C.green "V#{VERSION_MAJOR}.#{VERSION_MINOR}.#{VERSION_COUNTER}"}"
