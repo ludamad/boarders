@@ -1,4 +1,0 @@
-setupGameRestApi = () ->
-    
-
-return {setupGameRestApi}
