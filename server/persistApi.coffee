@@ -1,5 +1,17 @@
+# Runs the server 
+
+"use strict" # Enable strict mode.
+
+################################################################################
+# Includes 
+################################################################################
+
 sqlite3 = require("sqlite3").verbose()
 uuid = require "node-uuid"
+
+################################################################################
+# Database connection class, with methods specific to our tables. 
+################################################################################
 
 class DatabaseConnection
     constructor: () ->
@@ -36,18 +48,23 @@ class DatabaseConnection
 
     insert: (tableName, data, callback) -> @_db.serialize () =>
         keys = Object.keys(data)
-        stmt = @_db.prepare("insert into #{tableName} (#{keys.join ','}) values (?)")
+        stmt = @_db.prepare("insert into #{tableName} (#{keys.join ','}) " + 
+            "values (#{('?' for key in keys).join ','})")
         vals = (data[key] for key in keys)
+        that = @
         stmt.run.call(stmt, vals, 
             # Resolves to 'undefined' if callback is 'undefined':
-            callback and (error, data) -> callback(data) 
+            callback and (error) -> 
+                assert @lastID? # Did an insert happen?
+                print "#{tableName} #{JSON.stringify data} #{@lastID}"
+                that.get tableName, 'id', @lastID, callback
         )
         stmt.finalize()
 
     get: (tableName, col, colVal, callback) -> @_db.serialize () =>
         query = "SELECT * from #{tableName} WHERE #{col} = ?"
         @_db.all query, colVal, (err, rows) ->
-            callback(rows)
+            callback(rows[0])
 
     # Temporary
     test1: () -> @_db.serialize () =>
@@ -68,17 +85,29 @@ _SESSION_CACHE = {}
 # TODO: Move to MySQL, and optimize maybe.
 ################################################################################
 
-DatabaseConnection::createUser = (name) ->
-    @_db.insert 'users', {name}
+# Example usage of raw API: 
+#conn.insert 'game_rules', {name: 'Breakthrough'}
+#conn.get 'game_rules', 'name', 'Breakthrough', ([game]) ->
+#    console.log(game)
+
+DatabaseConnection::createUser = (name, callback) ->
+    @insert 'users', {name}, callback
 
 DatabaseConnection::getUser  = (db, id, callback) ->
-    @_db.get 'users', 'table', callback
+    @get 'users', 'id', id, callback
 
-DatabaseConnection::createSession = (user_id, callback) ->
-    @_db.insert 'sessions', {user_id}, callback
+DatabaseConnection::newSession = (user_id, callback) ->
+    @insert 'sessions', {user_id, uuid: uuid.v4()}, callback
+
+DatabaseConnection::authenticateSession = (session, callback) ->
+    @get 'sessions', {id: session.id}, (data) ->
+        goodSession = (data.timestamp == session.timestamp) and
+            (data.uuid == session.uuid) and
+            (data.user_id == session.user_id) 
+        callback(goodSession)
 
 DatabaseConnection::getSession = (id, callback) ->
-    @_db.get 'sessions', 'id', id, (data) ->
+    @get 'sessions', 'id', id, (data) ->
         _SESSION_CACHE[id] = data
         callback(data)
 

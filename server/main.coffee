@@ -1,3 +1,5 @@
+# Main entry point. Runs the server.
+
 "use strict" # Enable strict mode.
 
 ################################################################################
@@ -11,7 +13,7 @@ C = require 'cli-color'
 bodyParser = require 'body-parser'
 
 # Handles sessions and database access
-persist = require "./Persistence"
+persist = require "./persistApi"
 
 ################################################################################
 # Configuration
@@ -37,12 +39,16 @@ serverPrintInfo = () ->
 # Server class
 ################################################################################
 
-class SocketIoConnection
-    constructor: (@socket) ->
+class ClientConnection
+    constructor: (@socket, @db) ->
         print "New socket."
-
-    newSession: () ->
+    emit: (event, data) -> 
+        @socket.emit event, data
+    newSession: (data) ->
         print "New session."
+        @db.createUser data.name, (user) =>
+            @db.newSession user.id, (session) =>
+                @emit('newSessionResp', session)
 
 setupApp = (app) ->
     app.use(express.static(__dirname + '/build'))
@@ -52,8 +58,6 @@ setupApp = (app) ->
 
     # parse application/json 
     app.use(bodyParser.json())
-    #require("GameRequestApi").setup(app)
-    #require("").setupGameRestApi(app)
 
 createApp = () ->
     app = express()
@@ -61,25 +65,14 @@ createApp = () ->
     server = require('http').createServer(app)
     io = require('socket.io')(server)
     # The persist module is used for all our data access:
-    conn = new persist.DatabaseConnection()
-    conn.insert 'game_rules', {name: 'Breakthrough'}
-    conn.get 'game_rules', 'name', 'Breakthrough', ([game]) ->
-        console.log(game)
+    db = new persist.DatabaseConnection()
 
     server.listen config.PORT, () ->
         serverPrintInfo()
     io.on 'connection', (socket) -> 
-        # Create socket objects for each connection:
-        connection = new SocketIoConnection(socket)
+        # Create client objects for each connection socket:
+        connection = new ClientConnection(socket, db)
         for method in ['newSession']
-            socket.on method, connection[method]
+            socket.on method, connection[method].bind(connection)
 
-################################################################################
-# Exported module.
-#   serverStart: Server entry point.
-################################################################################
-
-module.exports = {
-    serverStart: () ->
-        createApp()
-}
+createApp()

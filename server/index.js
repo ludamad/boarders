@@ -3,5 +3,11 @@ require("coffee-script/register");
 
 global.print = console.log;
 
-require("./main").serverStart();
+global.assert = function(cond, error) {
+	if (!cond) {
+		throw new Error(error || "Assertion failed.");
+	}
+}
+
+require("./main");
 
