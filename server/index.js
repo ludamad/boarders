@@ -9,5 +9,9 @@ global.assert = function(cond, error) {
 	}
 }
 
-require("./main");
+if (process.env.TEST === "1") {
+	require("./tests/test_persistApi.coffee")
+} else {
+	require("./main");
+}
 

@@ -31,18 +31,35 @@ class DatabaseConnection
         # user_id is NULL for guests:
         @_createTable "sessions", "
             uuid    TEXT not null,
-            user_id INTEGER,
+            user_id INTEGER not null,
               foreign key (user_id) references users(id)"
 
         # 
         @_createTable "game_rules", "
-            name      TEXT not null
+            name      TEXT not null,
+            n_players INTEGER not null
         "
 
-        @_createTable "active_games", "
-            rule_id INTEGER,
+        @_createTable "game_instances", "
+            rule_id INTEGER not null,
+            is_active BOOLEAN not null default 1,
             foreign key (rule_id) references game_rules(id)"
 
+        @_createTable "game_instance_messages", "
+            game_instance_id INTEGER not null,
+            user_id INTEGER not null,
+            message TEXT not null,
+            foreign key (game_instance_id) references game_instances(id),
+            foreign key (user_id) references users(id)
+        "
+        @_createTable "game_instance_users", "
+            game_instance_id INTEGER not null,
+            user_id INTEGER not null,
+            is_host BOOLEAN not null,
+            player_kind TEXT not null,
+            foreign key (game_instance_id) references game_instances(id),
+            foreign key (user_id) references users(id)
+        "
     close: () ->
         @_db.close()
 
@@ -61,10 +78,15 @@ class DatabaseConnection
         )
         stmt.finalize()
 
-    get: (tableName, col, colVal, callback) -> @_db.serialize () =>
-        query = "SELECT * from #{tableName} WHERE #{col} = ?"
-        @_db.all query, colVal, (err, rows) ->
+    get: (tableName, col, colVal, callback) -> 
+        @getGeneric tableName, "#{col} = ?", [colVal], (rows) ->
             callback(rows[0])
+
+    getGeneric: (tableName, whereClause, whereArgs, callback) -> @_db.serialize () =>
+        query = "SELECT * from #{tableName} WHERE #{whereClause}"
+        @_db.all query, whereArgs..., (error, rows) ->
+            assert(not error)
+            callback(rows)
 
     # Temporary
     test1: () -> @_db.serialize () =>
@@ -90,25 +112,60 @@ _SESSION_CACHE = {}
 #conn.get 'game_rules', 'name', 'Breakthrough', ([game]) ->
 #    console.log(game)
 
-DatabaseConnection::createUser = (name, callback) ->
+DatabaseConnection::newUser = (name, callback) ->
     @insert 'users', {name}, callback
 
 DatabaseConnection::getUser  = (db, id, callback) ->
     @get 'users', 'id', id, callback
 
+# -- Game instance creation, querying, joining: -- #
+DatabaseConnection::newGameInstance = (session, rule_id, params, callback) ->
+    @insert 'game_instances', {rule_id: params.rule_id}, (gameInst) =>
+        @joinGameInstance(session, gameInst.id, true)
+        callback?(gameInst)
+
+DatabaseConnection::getGameInstance = (game_instance_id, callback) ->
+    @get 'game_instances', 'id', game_instance_id, callback
+
+DatabaseConnection::getActiveGameInstances = (callback) ->
+    @getGeneric 'game_instances', 'is_active = 1', [], (data) ->
+        print(data)
+        callback(data)
+
+DatabaseConnection::getGameInstanceFull = (game_instance_id, callback) ->
+    @getGameInstance game_instance_id, (gameInst) =>
+        @getGeneric 'game_instance_users', 'game_instance_id = ?', [game_instance_id], (users) =>
+            @getGeneric 'game_instance_messages', 'game_instance_id = ?', [game_instance_id], (messages) =>
+                gameInst.users = users
+                gameInst.messages = messages
+                callback(gameInst)
+
+DatabaseConnection::joinGameInstance = (session, game_instance_id, is_host, callback) ->
+    @insert 'game_instance_users', {game_instance_id, is_host, user_id: session.user_id}, callback
+
+DatabaseConnection::storeGameInstanceMessage = (session, game_instance_id, message, callback) ->
+    @insert 'game_instance_messages', {game_instance_id, message, user_id: session.user_id}, callback
+
 DatabaseConnection::newSession = (user_id, callback) ->
-    @insert 'sessions', {user_id, uuid: uuid.v4()}, callback
+    @insert 'sessions', {user_id, uuid: uuid.v4()}, (data) ->
+        _SESSION_CACHE[data.id] = data
+        callback(data)
 
 DatabaseConnection::authenticateSession = (session, callback) ->
     @get 'sessions', {id: session.id}, (data) ->
+        if not data?
+            return callback(goodSession)
         goodSession = (data.timestamp == session.timestamp) and
             (data.uuid == session.uuid) and
             (data.user_id == session.user_id) 
         callback(goodSession)
 
 DatabaseConnection::getSession = (id, callback) ->
-    @get 'sessions', 'id', id, (data) ->
-        _SESSION_CACHE[id] = data
-        callback(data)
+    if _SESSION_CACHE[id]
+        callback(_SESSION_CACHE[id])
+    else
+        @get 'sessions', 'id', id, (data) ->
+            _SESSION_CACHE[id] = data
+            callback(data)
 
 module.exports = {DatabaseConnection}

@@ -46,7 +46,7 @@ class ClientConnection
         @socket.emit event, data
     newSession: (data) ->
         print "New session."
-        @db.createUser data.name, (user) =>
+        @db.newUser data.name, (user) =>
             @db.newSession user.id, (session) =>
                 @emit('newSessionResp', session)
 
@@ -54,10 +54,10 @@ setupApp = (app) ->
     app.use(express.static(__dirname + '/build'))
     # Handle HTTP requests as JSON:
     # parse application/x-www-form-urlencoded 
-    app.use(bodyParser.urlencoded({ extended: false }))
+    # app.use(bodyParser.urlencoded({ extended: false }))
 
-    # parse application/json 
-    app.use(bodyParser.json())
+    # # parse application/json 
+    # app.use(bodyParser.json())
 
 createApp = () ->
     app = express()
@@ -66,7 +66,7 @@ createApp = () ->
     io = require('socket.io')(server)
     # The persist module is used for all our data access:
     db = new persist.DatabaseConnection()
-
+    db.insert 'game_rules', {name: 'Breakthrough', n_players: 2}
     server.listen config.PORT, () ->
         serverPrintInfo()
     io.on 'connection', (socket) -> 
@@ -74,5 +74,6 @@ createApp = () ->
         connection = new ClientConnection(socket, db)
         for method in ['newSession']
             socket.on method, connection[method].bind(connection)
+        connection.emit 'mock_data', ["One", "three", "blue"]
 
 createApp()

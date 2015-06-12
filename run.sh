@@ -24,6 +24,6 @@ cd "$ROOT/build/src"
 
 # In root/build
 cd "$ROOT/build"
-google-chrome --disable-web-security index.html
+google-chrome --disable-web-security http://localhost:8081/index.html
 
 rm -rf build
