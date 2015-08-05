@@ -90,14 +90,13 @@ export class HtmlStack {
 export class HtmlPiece {
     elem:JQuery;
     constructor(public _imageFile:string, public _w, public _h) {
-        throw new Error("Wee");
         this.elem = $("<img>")
            .attr("src", this._imageFile)
            .attr("class", _CSS.piece)
            .attr("style", "width: " + this._w + "px; height: " + this._h + "px;");
     }
 
-    public imageFile(file:string):string {
+    public imageFile(file?:string):string {
         if (file != null) {
             this.elem.attr("src", file);
             this._imageFile = file;

@@ -10,13 +10,13 @@ if has_flag "--help" || [ "$1" = "" ] ; then
   --setup: 
     Setup for building. Clone submodules, run 'npm install'.
   --client:
-    Compile HTML client.
-    Open locally built web page in browser.
+    Build HTML client.
   --server:
-    Start server on localhost.
+    Build server.
+  --tests:
+    Build tests. 
   --native_client:
-    Compile native client.
-    Run headless test client."
+    Build native client."
     exit
 fi
 
@@ -61,13 +61,12 @@ fi
 ######################################################
 
 if has_flag "--server" ; then
-    echo "Running TypeScript"
+    echo "Running TypeScript compiler on src/server/..."
     # Compile over typescript files to build/server-es6
     node ./scripts/tsc-bundled/tsc.js -project src/server 
     pushd ./build/server-es6/ 
     babel --optional runtime -d ../server/ *.js
     popd 
-    #"$SCRIPT_NODE_BIN/browserify" "$SERVER_DIR/main.ts" -p tsify -t babelify --outfile "$BUILD_DIR/server/main.js"
 fi
 
 if has_flag "--client" ; then
@@ -88,3 +87,11 @@ if has_flag "--client" ; then
     browserify build/client-es6/loader.js -t [ babelify --optional runtime --loose all ] --outfile build/client/bin.js
 fi
 
+if has_flag "--test" ; then
+    echo "Running TypeScript compiler on src/test/..."
+    # Compile over typescript files to build/server-es6
+    node ./scripts/tsc-bundled/tsc.js -project src/test
+    pushd ./build/test-es6/ 
+    babel --optional runtime -d ../test/ *.js
+    popd 
+fi

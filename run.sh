@@ -2,9 +2,11 @@
 
 source scripts/util.sh # does set +e; provides 'has_flag' and 'resolved_args'
 
-if has_flag "--help" ; then
-    echo "
-  ** Usage: Use one or more of the following **
+# Allow for using binaries in node_modules/:
+export PATH="`pwd`/node_modules/.bin/:$PATH"
+
+if has_flag "--help" || [ "$1" = "" ] ; then
+    echo "Usage: Use one or more of the following 
   --client-hosted:
     Open web page from server over localhost.
   --client:
@@ -12,8 +14,7 @@ if has_flag "--help" ; then
   --server:
     Start server on localhost.
   --native_client:
-    Run native test client.
-"
+    Run native test client."
     exit
 fi
 
@@ -33,3 +34,8 @@ if has_flag "--client-hosted" ; then
     google-chrome --disable-web-security http://localhost:8081/index.html
 fi
 
+if has_flag "--test" ; then
+    pushd build/
+    mocha
+    popd
+fi
