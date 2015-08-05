@@ -1,5 +1,5 @@
 # Be strict about errors:
-set +e
+set -e
 
 ###############################################################################
 # Bash function to check for a flag in 'args'.

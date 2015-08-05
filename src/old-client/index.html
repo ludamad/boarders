@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Boarders</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="css/normalize.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/index.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css">
+
+  <script src="libs/jquery-v1.11.1.js"></script>
+  <script src="libs/jquery.cookie.js"></script>
+  <script src="libs/handlebars-v2.0.0.js"></script>
+  <!-- <script src="libs/ember-1.9.1.js"></script> -->
+  <script src="libs/ember.debug.js"></script>
+  <script src="libs/ember-data.js"></script>
+  <script src="libs/ember-template-compiler.js"></script>
+  
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/showdown/0.3.1/showdown.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/moment.js/2.1.0/moment.min.js"></script>  
+
+  <!-- <script src="/socket.io.js"></script> -->
+  <script src="libs/socket.io.js"></script>
+  <script src="libs/EmberSockets.js"></script>
+
+  <!-- Browserify: All files will be compiled into bin.js according to their static 'require' relationship. -->
+  <script src="bin.js"></script>
+
+</head>
+<body>
+<script type="text/x-handlebars">
+<body>
+  {{!navbar}}
+  <nav class="navbar navbar-default">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <a class="navbar-brand" href="#">Boarders</a>
+      </div>
+      <div>
+      	<ul class="nav navbar-nav">
+      	</ul>
+      </div>
+    </div>
+  </nav>
+
+  <div>
+  {{outlet}}
+  </div>
+</body>
+</script>
+  
+<script type="text/x-handlebars" data-template-name="index">
+   <div id="board-container" class="Breakthrough-container"> 
+    <div id="board-1" class="board-b72b1" style="width: 30em; "> 
+    </div>
+    <div id="timers" class="timers">
+    </div>
+  </div>
+
+  <ul id="game-list">
+    {{#each data in mock_data}}
+      <li>{{data}}</li>
+    {{/each}}
+  </ul>
+
+  <div id="board-btn-container" class="btn-group">
+      <input class="btn btn-default btn-lg center-block" type="button" id="startBtn" value="Request Undo" />
+      <input class="btn btn-default btn-lg center-block" type="button" id="clearBtn" value="Flip View" />
+      <input class="btn btn-default btn-lg center-block" type="button" id="colorBtn" value="Resign" />
+  </div>
+</script>
+
+  <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 /// <reference path="../DefinitelyTyped/jquery/jquery.d.ts"/>
 
 import {gridWithValueNByMTimes} from "./common";
+import * as boarders from "./boarders";
 
 // Imports:
 
@@ -28,7 +29,7 @@ var cfg = {
 };
 
 // All the game information required for display:
-class HtmlPlayerInfoBlock {
+export class HtmlPlayerInfoBlock {
     elem = $("<div>").addClass("btn player disabled btn-success");
     _timeElem = $("<p>").addClass("time");
     _nameElem = $("<p>");
@@ -82,20 +83,21 @@ class HtmlPlayerInfoBlock {
 }
 
 // Pieces that can be played, outside of the board
-class HtmlStack {
+export class HtmlStack {
     constructor(public player, public piece, public amount : any = 0) {}
 }
 
-class HtmlPiece {
+export class HtmlPiece {
     elem:JQuery;
-    constructor(public _imageFile, public _w, public _h) {
+    constructor(public _imageFile:string, public _w, public _h) {
+        throw new Error("Wee");
         this.elem = $("<img>")
            .attr("src", this._imageFile)
            .attr("class", _CSS.piece)
            .attr("style", "width: " + this._w + "px; height: " + this._h + "px;");
     }
 
-    public imageFile(file) {
+    public imageFile(file:string):string {
         if (file != null) {
             this.elem.attr("src", file);
             this._imageFile = file;
@@ -104,7 +106,7 @@ class HtmlPiece {
     }
 }
 
-class HtmlCell {
+export class HtmlCell {
     elem:JQuery;
     gridCell = null;
     _piece = null;
@@ -123,7 +125,7 @@ class HtmlCell {
         return this.piece(null);
     }
 
-    public piece(piece = this._piece) {
+    public piece(piece = this._piece): HtmlPiece {
         if (typeof piece === "string") {
             piece = new HtmlPiece(piece, this.width, this.height);
         }
@@ -148,6 +150,9 @@ class HtmlCell {
     }
 }
 
+type BoardCallback = (self:HtmlBoard, cell:HtmlCell) => void;
+type DomCallback = () => void;
+
 export class HtmlBoard {
     public draggedPiece = null;
     public cells:HtmlCell[][];
@@ -155,33 +160,34 @@ export class HtmlBoard {
     public sqrWidth:number;
     public elem:JQuery;
     public orientation:string;
+    public grid:boarders.Grid;
     
-    constructor(public boardId, public width, public height) {
+    constructor(public boardId:number, public width:number, public height:number) {
         this.orientation = "black";
         this.elem = $("#" + this.boardId);  //' + @boardId)
         this.sqrWidth = this.elem.width() / this.width;
         this.sqrHeight = this.sqrWidth;  // Square squares for now. Makes sense.
-        this.cells = gridWithValueNByMTimes<HtmlCell>(null, width, height);
+        this.cells = gridWithValueNByMTimes(null, width, height);
         this.draggedPiece = null;
     }   
 
-    public getCellFromCell(cell) {
-        return this.getCell(cell.x, cell.y);
+    public getCellFromCell(cell:boarders.Cell):HtmlCell {
+        return this.getCell(cell.x(), cell.y());
     }
 
-    public getPiece(x, y) {
+    public getPiece(x, y):HtmlPiece {
         return this.getCell(x, y).piece();
     }
 
-    public setPiece(x, y, piece) {
-        return this.getCell(x, y).piece(piece);
+    public setPiece(x, y, piece):void {
+        this.getCell(x, y).piece(piece);
     }
 
-    public movePiece(x1, y1, x2, y2) {
-        return this.getCell(x1, y1).movePiece(this.getCell(x2, y2));
+    public movePiece(x1:number, y1:number, x2:number, y2:number):void {
+        this.getCell(x1, y1).movePiece(this.getCell(x2, y2));
     }
 
-    public setup() {
+    public setup():void {
         this.elem.empty();
         var squareColor = "white";
         for (var y = 0; y < this.height; y++) {
@@ -205,36 +211,35 @@ export class HtmlBoard {
             rowEl.append($("<div class=" + _CSS.clearfix + ">"));
             squareColor = startColor === "white" ? "black" : "white";
             if (this.orientation === "white") {
-                return this.elem.append(rowEl);
+                this.elem.append(rowEl);
             } else {
-                return this.elem.prepend(rowEl);
+                this.elem.prepend(rowEl);
             }
         }
     }
 
-    public _createDomCallbackFromCellFunc(f) {
+    public _createDomCallbackFromCellFunc<T>(f:BoardCallback): DomCallback {
         var self = this;
         return function() {
-            var cell, x, y;
-            x = parseInt($(this).attr("data-x"));
-            y = parseInt($(this).attr("data-y"));
-            cell = self.getCell(x, y);
-            return f(self, cell);
+            var x = parseInt($(this).attr("data-x"));
+            var y = parseInt($(this).attr("data-y"));
+            var cell = self.getCell(x, y);
+            f(self, cell);
         };
     }
 
-    public onCellClick(f) {
-        return this.elem.find("." + _CSS.square).click(this._createDomCallbackFromCellFunc(f));
+    public onCellClick<T>(f:BoardCallback):void {
+        this.elem.find("." + _CSS.square).click(this._createDomCallbackFromCellFunc(f));
     }
 
     public onCellHover(startHoverF, endHoverF) {
         var endHoverDom, startHoverDom;
         startHoverDom = this._createDomCallbackFromCellFunc(startHoverF);
         endHoverDom = this._createDomCallbackFromCellFunc(endHoverF);
-        return this.elem.find("." + _CSS.square).hover(startHoverDom, endHoverDom);
+        this.elem.find("." + _CSS.square).hover(startHoverDom, endHoverDom);
     }
 
-    public getCell(x, y) {
+    public getCell(x:number, y:number) : HtmlCell {
         return this.cells[y][x];
     }
 }
@@ -251,7 +256,7 @@ export class HtmlPlayArea {
     public boards:HtmlBoard[];
     public pInfoBlocks:HtmlPlayerInfoBlock[];
 
-    constructor(public elem) {
+    constructor(public elem:JQuery) {
         this.boards = [];
         this.pieceStacks = [];
         this.pInfoBlocks = [];
@@ -259,31 +264,38 @@ export class HtmlPlayArea {
         this.pInfoBlocks.push(new HtmlPlayerInfoBlock("not ludamad", "black", 50));
         //uiStateMachine = playAreaUiStateMachine(@)
         //uiStateMachine.addUiTrigger
-        this.pInfoBlocks.forEach((info) => this.elem.find("#timers").append(info.elem));  //timers').append(info.elem)
+        for (var info of this.pInfoBlocks) {
+            this.elem.find("#timers").append(info.elem);
+        }
     }
 
-    public board(id, w, h) {
-        var board;
-        board = new HtmlBoard(id, w, h);
+    public board(id:number, w:number, h:number): HtmlBoard {
+        var board = new HtmlBoard(id, w, h);
         this.boards.push(board);
         return board;
     }
 
-    public onCellClick(f) {
-        return this.boards.map((board) => board.onCellClick(f));
+    public onCellClick(f):void {
+        for (var board of this.boards) {
+            board.onCellClick(f);
+        }
     }
 
-    public onCellHover(startHoverF, endHoverF) {
-        return this.boards.map((board) => board.onCellHover(startHoverF, endHoverF));
+    public onCellHover(startHoverF, endHoverF):void {
+        for (var board of this.boards) {
+            board.onCellHover(startHoverF, endHoverF);
+        }
     }
 
-    public setup() {
-        return this.boards.map((board) => board.setup());
+    public setup():void {
+        for (var board of this.boards) {
+            board.setup();
+        }
     }
 
     public addUiTrigger(_arg) {
-        var triggerCells, triggerOnClick, triggerOnDrag, _arg;
-        triggerCells = _arg.triggerCells, triggerOnDrag = _arg.triggerOnDrag, triggerOnClick = _arg.triggerOnClick;
+        // var triggerCells, triggerOnClick, triggerOnDrag, _arg;
+        // triggerCells = _arg.triggerCells, triggerOnDrag = _arg.triggerOnDrag, triggerOnClick = _arg.triggerOnClick;
     }
 }
 

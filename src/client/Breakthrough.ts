@@ -3,13 +3,12 @@ import {runEnginePlayer, stopEnginePlayer} from "./jmarine/ai-spawn";
 
 // More or less takes control of the game and UI logic.
 export function setupBreakthrough(elem) {
-    var MOVE_DIRECTIONS, ai, game, pawn, playArea, rules, selectedCell;
-    rules = new boarders.Rules();
+    var rules = new boarders.Rules();
     rules.player("white");
     rules.player("black");
     rules.grid("board-1", 8, 8);
 
-    pawn = rules.piece("pawn");
+    var pawn = rules.piece("pawn");
     pawn.image("white", "images/Chess/wpawn_45x45.svg");
     pawn.image("black", "images/Chess/bpawn_45x45.svg");
 
@@ -28,7 +27,7 @@ export function setupBreakthrough(elem) {
     rules.direction("board-1", "backward", 0, -1);
     rules.direction("board-1", "backward-right", 1, -1);
 
-    ai = rules.playerAi("Easy");
+    var ai = rules.playerAi("Easy");
     ai.thinkFunction((game, onFinishThinking) => {
         // Interface with jmarine's AI:
         var contents, gameString, owner;
@@ -38,19 +37,19 @@ export function setupBreakthrough(elem) {
         } else {
             contents.push(2);
         }
-        game.pieces().forEach((piece) => {
+        for (var piece of game.pieces) {
             if (piece != null) {
                 owner = piece.owner;
-                return contents.push(owner.id === "white" ? "P" : "p");
+                contents.push(owner.id === "white" ? "P" : "p");
             } else {
-                return contents.push(" ");
+                contents.push(" ");
             }
-        });
+        }
         gameString = contents.join("");
         return runEnginePlayer(5, gameString, onFinishThinking);
     });
 
-    game = new boarders.GameState(rules);
+    var game = new boarders.GameState(rules);
 
     function queueAI() {
         return ai.think(game, (move) => {
@@ -62,12 +61,12 @@ export function setupBreakthrough(elem) {
             fromCell = game.rules().getCell(from);
             toCell = game.rules().getCell(to);
             game.movePiece(fromCell, toCell);
-            return game.endTurn();
+            game.endTurn();
         });
     }
 
     // Used for move generation logic:
-    MOVE_DIRECTIONS = [
+    var MOVE_DIRECTIONS = [
         {
             white: "forward-left",
             black: "backward-left",
@@ -84,13 +83,11 @@ export function setupBreakthrough(elem) {
     ];
 
     function validCells(cell) {
-        var cells, dir, next, player, _i, _len;
-        player = game.currentPlayer();
-        cells = [];
-        if ((game.hasPiece(cell) != null) && game.getPieceOwner(cell) === player) {
-            for (_i = 0, _len = MOVE_DIRECTIONS.length; _i < _len; _i++) {
-                dir = MOVE_DIRECTIONS[_i];
-                next = cell.next(dir[player]);
+        var player = game.currentPlayer();
+        var cells = [];
+        if (game.hasPiece(cell) != null && game.getPieceOwner(cell) === player) {
+            for (var dir of MOVE_DIRECTIONS) {
+                var next = cell.next(dir[player]);
                 if (next == null) {
                     // Invalid: Direction not defined here
                     continue;
@@ -108,6 +105,7 @@ export function setupBreakthrough(elem) {
                 if (dir.canCapture) {
                     // Valid: Direction defined and enemy and diagonal
                     cells.push(next);
+                    continue;
                 }
                 // Invalid: Direction defined and enemy and forward
             }
@@ -115,31 +113,35 @@ export function setupBreakthrough(elem) {
         return cells;
     }
 
-    selectedCell = null;
+    var selectedCell = null;
 
     // Set up the breakthrough board for the current element:
-    playArea = game.setupHtml(elem);
+    var playArea = game.setupHtml(elem);
     playArea.onCellClick((board, cell) => {
-        var cells, _ref1;
         if ((selectedCell != null) && selectedCell !== cell) {
-            cells = validCells(selectedCell.gridCell);
+            var cells = validCells(selectedCell.gridCell);
             // Is the move valid?
-            if (_ref1 = cell.gridCell, __indexOf.call(cells, _ref1) >= 0) {
+            if (cells.indexOf(cell.gridCell) >= 0) {
                 game.movePiece(selectedCell.gridCell, cell.gridCell);
                 game.endTurn();
                 queueAI();
             }
             selectedCell.highlightReset();
-            return selectedCell = null;
+            selectedCell = null;
         } else if (cell.piece() != null) {
             selectedCell = cell;
-            return selectedCell.highlightSelected();
+            selectedCell.highlightSelected();
         }
     });
 
-    return playArea.onCellHover(((board, cell) => cell.highlightHover()), (board, cell) => {
-        if (cell !== selectedCell) {
-            return cell.highlightReset();
+    playArea.onCellHover(
+        (board, cell) => {
+            cell.highlightHover()
+        }, 
+        (board, cell) => {
+            if (cell !== selectedCell) {
+                return cell.highlightReset();
+            }
         }
-    });
+    );
 }
