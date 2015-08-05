@@ -1,29 +1,26 @@
-# Public is our build directory:
+#!/bin/bash
 
-ROOT=`pwd` 
+source scripts/util.sh # does set +e; provides 'has_flag' and 'resolved_args'
 
-if [ ! -e "$ROOT/server/node_modules" ] ; then
-    echo "Run npm install in server/, please."
+if has_flag "--help" ; then
+    echo "
+  ** Usage: Use one or more of the following **
+  --client:
+    Open locally built web page in browser.
+  --server:
+    Start server on localhost.
+  --native_client:
+    Run native test client.
+"
+    exit
 fi
 
-# In root
-mkdir -p build
-rm -rf build/libs
-cp -r client/*.html client/libs client/models client/css client/images client/jmarine build
-rm -f build/bin.js
+######################################################
+# RUN SECTION
+######################################################
 
-rm -rf "$ROOT/build/src"
-mkdir -p "$ROOT/build/src"
+if has_flag "--server" ; then
+    node build/server/loader.js
+fi
 
-cp -r "$ROOT/client/jmarine" "$ROOT/client/models/" "$ROOT/client/"*.coffee "$ROOT/client/"*.js "$ROOT/build/src"
 
-# In root/build/src
-cd "$ROOT/build/src"
-"$ROOT/server/node_modules/.bin/coffee" -c *.coffee jmarine/*.coffee models/*.coffee
-"$ROOT/server/node_modules/.bin/browserify" app.js > "$ROOT/build/bin.js"
-
-# In root/build
-cd "$ROOT/build"
-google-chrome --disable-web-security http://localhost:8081/index.html
-
-rm -rf build

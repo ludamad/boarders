@@ -1,0 +1,35 @@
+{
+    "version": "1.5.0-beta",
+    "compilerOptions": {
+        "target": "es6",
+        "module": "commonjs",
+        "isolatedModules": false,
+        "jsx": "react",
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "declaration": false,
+        "noImplicitAny": false,
+        "removeComments": true,
+        "experimentalAsyncFunctions": true,
+        "noLib": false,
+        "preserveConstEnums": true,
+        "suppressImplicitAnyIndexErrors": true,
+        "outDir": "../build/generated",
+        "rootDir": "."
+    },
+    "filesGlob": [
+        "./**/*.ts",
+        "./**/*.tsx",
+        "!./node_modules/**/*"
+    ],
+    "files": [
+        "./Breakthrough.ts",
+        "./anyboard.ts",
+        "./app.ts",
+        "./boarders.ts",
+        "./common.ts",
+        "./ember-data.d.ts",
+        "./jmarine/ai-spawn.ts",
+        "./loader.ts"
+    ]
+}

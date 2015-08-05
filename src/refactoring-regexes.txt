@@ -1,0 +1,12 @@
+DatabaseConnection::(.*) = \((.*)\) -> to $1($2) {
+
+Function parens:
+^([^/]+)([\.a-zA-Z0-9]+)( [^\s(].*)$ 
+$1$2($3);
+
+bullshit = function() {
+([a-zA-Z0-9]+) = function(\(.*\)) {
+function $1$2 {
+
+prototype = bullshit
+^(\s+).*prototype.([a-zA-Z0-9]+) = function(\(.*\)) {
