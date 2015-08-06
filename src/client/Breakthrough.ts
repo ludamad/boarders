@@ -36,24 +36,23 @@ export function setupBreakthrough(elem:JQuery):boarders.GameState {
     var rules = createRules();
     
     var ai = rules.playerAi("Easy");
-    ai.thinkFunction((game, onFinishThinking) => {
+    ai.thinkFunction((game:boarders.GameState, onFinishThinking) => {
         // Interface with jmarine's AI:
-        var contents, gameString, owner;
-        contents = ["Breakthrough:"];
+        let contents = ["Breakthrough:"];
         if (game.currentPlayer() === "white") {
-            contents.push(1);
+            contents.push("1");
         } else {
-            contents.push(2);
+            contents.push("2");
         }
-        for (var piece of game.pieces) {
+        for (let piece of game.pieces()) {
             if (piece != null) {
-                owner = piece.owner;
+                let owner = piece.owner;
                 contents.push(owner.id === "white" ? "P" : "p");
             } else {
                 contents.push(" ");
             }
         }
-        gameString = contents.join("");
+        let gameString = contents.join("");
         return runEnginePlayer(5, gameString, onFinishThinking);
     });
 
@@ -143,7 +142,7 @@ export function setupBreakthrough(elem:JQuery):boarders.GameState {
 
     playArea.onCellHover(
         (board, cell) => {
-            cell.highlightHover()
+            cell.highlightHover();
         }, 
         (board, cell) => {
             if (cell !== selectedCell) {

@@ -149,8 +149,8 @@ export class HtmlCell {
     }
 }
 
-type BoardCallback = (self:HtmlBoard, cell:HtmlCell) => void;
-type DomCallback = () => void;
+export type BoardCallback = (self:HtmlBoard, cell:HtmlCell) => void;
+export type DomCallback = () => void;
 
 export class HtmlBoard {
     public draggedPiece = null;
@@ -231,7 +231,7 @@ export class HtmlBoard {
         this.elem.find("." + _CSS.square).click(this._createDomCallbackFromCellFunc(f));
     }
 
-    public onCellHover(startHoverF, endHoverF) {
+    public onCellHover(startHoverF:BoardCallback, endHoverF:BoardCallback) {
         var endHoverDom, startHoverDom;
         startHoverDom = this._createDomCallbackFromCellFunc(startHoverF);
         endHoverDom = this._createDomCallbackFromCellFunc(endHoverF);
@@ -274,13 +274,13 @@ export class HtmlPlayArea {
         return board;
     }
 
-    public onCellClick(f):void {
+    public onCellClick(f:BoardCallback):void {
         for (var board of this.boards) {
             board.onCellClick(f);
         }
     }
 
-    public onCellHover(startHoverF, endHoverF):void {
+    public onCellHover(startHoverF:BoardCallback, endHoverF:BoardCallback):void {
         for (var board of this.boards) {
             board.onCellHover(startHoverF, endHoverF);
         }

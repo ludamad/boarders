@@ -12,24 +12,27 @@ export function stopEnginePlayer() {
     }
 }
 
-export function runEnginePlayer(level, gameString, onFinishThinking) {
-    var args;
-    args = {
+export function runEnginePlayer(level:number, gameString:string, onFinishThinking: (string) => void) {
+    let args = {
         alg: "negascout",
         level: level,
         game: gameString
     };
 
     if (worker == null) {
+        console.log("Spawning ai-worker");
         worker = new Worker("jmarine/ai-worker.js");
 
         worker.onmessage = (event) => {
-            var moveStr;
-            moveStr = event.data;
+            if (event.data == "spawned") {
+                console.log("AI worker confirms that it has been spawned");
+                return;
+            }
+            let moveStr = event.data;
             console.log("AI returned " + moveStr + ".");
-            return onFinishThinking(moveStr);
+            onFinishThinking(moveStr);
         };
     }
-
+    console.log("Telling ai-worker to think");
     return worker.postMessage(args);
 }

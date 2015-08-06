@@ -180,7 +180,7 @@ export class SlideMove {
 // This is user facing code, use getters and underscored members:
 export class Player {
     _enumId:number = null;
-    constructor(public id:number) {}
+    constructor(public id:string) {}
 
     public enumId(_enumId : any = this._enumId) {
         this._enumId = _enumId != null ? _enumId : this._enumId;
@@ -235,7 +235,7 @@ export class GameState {
         return this._currentPlayerNum;
     }
 
-    public currentPlayer():number {
+    public currentPlayer():string {
         return this._rules._players[this._currentPlayerNum].id;
     }
 

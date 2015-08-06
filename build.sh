@@ -59,7 +59,8 @@ echo "Running Babel compiler on ./build/es6 (fills ./build/)"
 pushd ./build/es6 && babel --optional runtime --loose all -d ../ `find -name '*.js'` && popd
 
 # Copy over non-coffee files
-cp -r src/client/*.html src/client/libs src/client/models src/client/css src/client/images src/client/jmarine/*.js build/client
+cp -r src/client/*.html src/client/libs src/client/models src/client/css src/client/images build/client
+mkdir -p build/client/jmarine && cp -r src/client/jmarine/*.js build/client/jmarine/
 cp -r src/native/*.html build/client
 cp -r build/native/*.js build/client
 rm -f build/client/bin.js # Prevent mistakes if build fails

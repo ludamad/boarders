@@ -15,6 +15,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+postMessage("spawned");
 
 importScripts('game.js');
 importScripts('draughts.js');
@@ -25,6 +26,7 @@ importScripts('breakthrough.js');
 importScripts('move.js');
 importScripts('ai.js');
 
+console.log("subfiles loaded");
 onmessage = function (event) {
   var alg  = event.data.alg;
   var level = event.data.level;
