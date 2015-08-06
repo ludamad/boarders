@@ -23,11 +23,10 @@ import {arrayWithValueNTimes, mapUntilN, mapNByM} from "./common";
 import * as anyboard from "./anyboard";
 
 // Helpers:
-function stringListCast(players) {
+function stringListCast(players:string[]|string):string[] {
     if (typeof players === "string") {
         return [players];
-    }
-    return players;
+    } else return players;
 }
 
 interface Enumerable {
@@ -222,6 +221,7 @@ export class GameState {
     _currentPlayerNum:number = 0;
     _enumOwners:any;
     _enumPieces:any;
+    _playArea:anyboard.HtmlPlayArea = null;
 
     constructor(public _rules:Rules) {
         this._enumOwners = _rules._initialEnumOwners.map((copy) => copy);
@@ -282,7 +282,7 @@ export class GameState {
             } else {
                 var cell = this._rules.cellList()[i];
                 pieces.push({
-                    owner: owner,
+                    owner,
                     type: this._rules._pieces[typeEnum], 
                     x: cell.x(), 
                     y: cell.y()
@@ -293,11 +293,11 @@ export class GameState {
     }
 
     public setupHtml(container):anyboard.HtmlPlayArea {
-        var playArea = new anyboard.HtmlPlayArea(container);
+        this._playArea = new anyboard.HtmlPlayArea(container);
         for (var grid of this._rules.grids()) {
-            grid._board = playArea.board(grid.id, grid.width(), grid.height());
+            grid._board = this._playArea.board(grid.id, grid.width(), grid.height());
         }
-        playArea.setup();
+        this._playArea.setup();
 
         // Link the representations for easy end-user manipulation:
         for (var grid of this._rules.grids()) {
@@ -310,7 +310,7 @@ export class GameState {
             }
         }
         this.syncPieces();
-        return playArea;
+        return this._playArea;
     }
 
     public endTurn():void {

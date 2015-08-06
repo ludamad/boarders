@@ -15,7 +15,8 @@
     "jsdom": "3.x.x",
     "mocha-jsdom": "~1.0.0",
     "chai": "~3.2.0",
-    "jquery": "~2.1.4"
+    "jquery": "~2.1.4",
+    "electron-prebuilt": "~0.30.2"
   },
   "dependencies": {
     "cli-color": "~1.0.0",

@@ -5,18 +5,10 @@ source scripts/util.sh # does set +e; provides 'has_flag' and 'resolved_args'
 # Allow for using binaries in node_modules/:
 export PATH="`pwd`/node_modules/.bin/:$PATH"
 
-if has_flag "--help" || [ "$1" = "" ] ; then
+if has_flag "--help" ; then
     echo "Usage: Use one or more of the following
-  --setup: 
-    Setup for building. Clone submodules, run 'npm install'.
   --client:
-    Build HTML client.
-  --server:
-    Build server.
-  --tests:
-    Build tests. 
-  --native_client:
-    Build native client."
+    Build HTML client."
     exit
 fi
 
@@ -60,38 +52,25 @@ fi
 # BUILD SECTION
 ######################################################
 
-if has_flag "--server" ; then
-    echo "Running TypeScript compiler on src/server/..."
-    # Compile over typescript files to build/server-es6
-    node ./scripts/tsc-bundled/tsc.js -project src/server 
-    pushd ./build/server-es6/ 
-    babel --optional runtime -d ../server/ *.js
-    popd 
-fi
+echo "Running TypeScript compiler on src/... (fills ./build/es6)"
+node ./scripts/tsc-bundled/tsc.js -project src
+echo "Running Babel compiler on ./build/es6 (fills ./build/)"
+pushd ./build/es6 && babel --optional runtime --loose all -d ../ `find -name '*.js'` && popd
 
-if has_flag "--client" ; then
-    rm -rf build/client && mkdir -p build/client
-    # Copy over non-coffee files
-    cp -r src/client/*.html src/client/libs src/client/models src/client/css src/client/images src/client/jmarine/*.js build/client
-    rm -f build/client/bin.js # Prevent mistakes if build fails
+# Copy over non-coffee files
+cp -r src/client/*.html src/client/libs src/client/models src/client/css src/client/images src/client/jmarine/*.js build/client
+cp -r src/native/*.html build/client
+cp -r build/native/*.js build/client
+rm -f build/client/bin.js # Prevent mistakes if build fails
 
     # Compile over coffee files
 #    pushd src
 #    coffee -o build/client -c models/*.coffee
 #    popd
 
-    # Compile over typescript files to build/client-es6
-    node ./scripts/tsc-bundled/tsc.js -project src/client
-
+# TODO revisit flag business
+if has_flag "--client" ; then
     # Run browserify:
-    browserify build/client-es6/loader.js -t [ babelify --optional runtime --loose all ] --outfile build/client/bin.js
+    browserify build/client/loader.js --outfile build/client/bin.js
 fi
 
-if has_flag "--test" ; then
-    echo "Running TypeScript compiler on src/test/..."
-    # Compile over typescript files to build/server-es6
-    node ./scripts/tsc-bundled/tsc.js -project src/test
-    pushd ./build/test-es6/ 
-    babel --optional runtime -d ../test/ *.js
-    popd 
-fi

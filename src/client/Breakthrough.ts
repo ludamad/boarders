@@ -2,7 +2,7 @@ import * as boarders from "./boarders";
 import {runEnginePlayer, stopEnginePlayer} from "./jmarine/ai-spawn";
 
 // More or less takes control of the game and UI logic.
-export function setupBreakthrough(elem) {
+export function setupBreakthrough(elem:JQuery):boarders.GameState {
     var rules = new boarders.Rules();
     rules.player("white");
     rules.player("black");
@@ -53,13 +53,12 @@ export function setupBreakthrough(elem) {
 
     function queueAI() {
         return ai.think(game, (move) => {
-            var from, fromCell, to, toCell, _ref1;
             if (move == null) {
                 return;
             }
-            _ref1 = [move.substring(0, 2), move.substring(2, 4)], from = _ref1[0], to = _ref1[1];
-            fromCell = game.rules().getCell(from);
-            toCell = game.rules().getCell(to);
+            var from = move.substring(0, 2), to = move.substring(2, 4);
+            var fromCell = game.rules().getCell(from);
+            var toCell = game.rules().getCell(to);
             game.movePiece(fromCell, toCell);
             game.endTurn();
         });
@@ -144,4 +143,6 @@ export function setupBreakthrough(elem) {
             }
         }
     );
+    
+    return game;
 }

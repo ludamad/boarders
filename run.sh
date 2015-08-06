@@ -24,18 +24,15 @@ fi
 
 if has_flag "--server" ; then
     node build/server/loader.js
-fi
-
-if has_flag "--client" ; then
-    google-chrome --disable-web-security build/client/index.html
-fi
-
-if has_flag "--client-hosted" ; then
+elif has_flag "--client" ; then
+    #electron build/client/ui-test-loader.js index
+    electron build/client/ui-test-loader.js board
+elif has_flag "--client-hosted" ; then
     google-chrome --disable-web-security http://localhost:8081/index.html
-fi
-
-if has_flag "--test" ; then
-    pushd build/
+elif has_flag "--test" ; then
+    pushd build/test
     mocha
     popd
+else
+    electron build/client/ui-test-loader.js $1
 fi

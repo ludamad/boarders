@@ -14,18 +14,30 @@
         "noLib": false,
         "preserveConstEnums": true,
         "suppressImplicitAnyIndexErrors": true,
-        "outDir": "../../build/server-es6",
+        "outDir": "../build/es6",
         "rootDir": "."
     },
     "filesGlob": [
         "./**/*.ts",
         "./**/*.tsx",
+        "!./DefinitelyTyped/**/*",
         "!./node_modules/**/*"
     ],
     "files": [
-        "./common.ts",
-        "./loader.ts",
-        "./main.ts",
-        "./persistApi.ts"
+        "./client/Breakthrough.ts",
+        "./client/anyboard.ts",
+        "./client/app.ts",
+        "./client/boarders.ts",
+        "./client/common.ts",
+        "./client/ember-data.d.ts",
+        "./client/jmarine/ai-spawn.ts",
+        "./client/loader.ts",
+        "./native/ui-test-board.ts",
+        "./native/ui-test-loader.ts",
+        "./server/common.ts",
+        "./server/loader.ts",
+        "./server/main.ts",
+        "./server/persistApi.ts",
+        "./test/anyboard.ts"
     ]
 }
