@@ -30,7 +30,7 @@ elif has_flag "--client" ; then
 elif has_flag "--client-hosted" ; then
     google-chrome --disable-web-security http://localhost:8081/index.html
 elif has_flag "--test" ; then
-    pushd build/test
+    pushd build/
     mocha
     popd
 else

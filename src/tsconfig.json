@@ -38,6 +38,7 @@
         "./server/loader.ts",
         "./server/main.ts",
         "./server/persistApi.ts",
-        "./test/anyboard.ts"
+        "./test/anyboard.ts",
+        "./test/before.ts"
     ]
 }

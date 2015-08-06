@@ -2,8 +2,10 @@ import * as boarders from "./boarders";
 import {runEnginePlayer, stopEnginePlayer} from "./jmarine/ai-spawn";
 
 // More or less takes control of the game and UI logic.
-export function setupBreakthrough(elem:JQuery):boarders.GameState {
+
+export function createRules():boarders.Rules {
     var rules = new boarders.Rules();
+
     rules.player("white");
     rules.player("black");
     rules.grid("board-1", 8, 8);
@@ -27,6 +29,12 @@ export function setupBreakthrough(elem:JQuery):boarders.GameState {
     rules.direction("board-1", "backward", 0, -1);
     rules.direction("board-1", "backward-right", 1, -1);
 
+    return rules;
+}
+
+export function setupBreakthrough(elem:JQuery):boarders.GameState {
+    var rules = createRules();
+    
     var ai = rules.playerAi("Easy");
     ai.thinkFunction((game, onFinishThinking) => {
         // Interface with jmarine's AI:
@@ -143,6 +151,6 @@ export function setupBreakthrough(elem:JQuery):boarders.GameState {
             }
         }
     );
-    
+
     return game;
 }

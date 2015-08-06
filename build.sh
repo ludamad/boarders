@@ -52,6 +52,7 @@ fi
 # BUILD SECTION
 ######################################################
 
+rm -rf ./build/ && mkdir -p ./build
 echo "Running TypeScript compiler on src/... (fills ./build/es6)"
 node ./scripts/tsc-bundled/tsc.js -project src
 echo "Running Babel compiler on ./build/es6 (fills ./build/)"

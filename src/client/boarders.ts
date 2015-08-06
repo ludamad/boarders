@@ -151,7 +151,9 @@ export class Grid extends Graph {
         // Case 2: getCell(id)
         for (var row of this._cells) {
             for (var cell of row) {
-                return cell;
+                if (cell.id === id) {
+                    return cell;
+                }
             }
         }
         return null;
@@ -178,7 +180,7 @@ export class SlideMove {
 // This is user facing code, use getters and underscored members:
 export class Player {
     _enumId:number = null;
-    constructor(public id) {}
+    constructor(public id:number) {}
 
     public enumId(_enumId : any = this._enumId) {
         this._enumId = _enumId != null ? _enumId : this._enumId;
@@ -187,7 +189,7 @@ export class Player {
 }
 
 // This is user facing code, use getters and underscored members:
-class Piece {
+export class Piece {
     _images = {};
     _enumId:number = null;
     constructor(public id) {
@@ -219,8 +221,8 @@ interface PieceInfo {
 // This is user facing code, use getters and underscored members:
 export class GameState {
     _currentPlayerNum:number = 0;
-    _enumOwners:any;
-    _enumPieces:any;
+    _enumOwners:number[];
+    _enumPieces:number[];
     _playArea:anyboard.HtmlPlayArea = null;
 
     constructor(public _rules:Rules) {
@@ -292,7 +294,7 @@ export class GameState {
         return pieces;
     }
 
-    public setupHtml(container):anyboard.HtmlPlayArea {
+    public setupHtml(container:JQuery):anyboard.HtmlPlayArea {
         this._playArea = new anyboard.HtmlPlayArea(container);
         for (var grid of this._rules.grids()) {
             grid._board = this._playArea.board(grid.id, grid.width(), grid.height());
@@ -404,8 +406,8 @@ export class Rules {
     _turnsCanPass:boolean = false;
     _stacks = [];
     _pieces:Piece[] = [];
-    _initialEnumPieces = [];
-    _initialEnumOwners = [];
+    _initialEnumPieces:number[] = [];
+    _initialEnumOwners:number[] = [];
     _finalized = false;
 
     public direction(grid, name, dx, dy) {
@@ -444,7 +446,7 @@ export class Rules {
         return this._cellEnumerator.list;
     }
 
-    public boardSetup(pieceId, playerId, cellIds) {
+    public boardSetup(pieceId:string, playerId:string, cellIds:string[]):void {
         this._ensureFinalized();
         cellIds = stringListCast(cellIds);  // Ensure list
         for (var cellId of cellIds) {
@@ -515,7 +517,7 @@ export class Rules {
         }
     }
 
-    public getStack(id) {
+    public getStack(id:string):Piece {
         for (var stack of this._stacks) {
             if (stack.id === id) {
                 return stack;
@@ -523,7 +525,7 @@ export class Rules {
         }
     }
     
-    public getPiece(id) {
+    public getPiece(id:string):Piece {
         for (var piece of this._pieces) {
             if (piece.id === id) {
                 return piece;

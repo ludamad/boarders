@@ -1,36 +1,57 @@
 declare var describe, require, before, it;
 
-var assert = require('chai').assert;
+var {assert} = require('chai');
+require('chai').config.includeStack = true;
+var jsdom = require('mocha-jsdom');
 
-import * as anyboard from "../client/anyboard";
 import * as boarders from "../client/boarders";
-import {setupBreakthrough} from "../client/Breakthrough";
+import * as Breakthrough from "../client/Breakthrough";
+
+function assertSeenOnce(obj:any, trait="__VISITED"):void {
+    assert.ok(obj);
+    assert.equal(obj[trait], undefined, "Cell should not be visited twice!");
+    obj[trait] = true;
+}
 
 describe('mocha tests', function () {
+    jsdom();
+    before(() => {
+        (<any>global).$ = jsdom.rerequire('jquery');
+    });
     // JSDom setup:
-    it('tests Breakthrough rule creation', () => {
-        var rules = new boarders.Rules();
-        rules.player("white");
-        rules.player("black");
-        rules.grid("board-1", 8, 8);
+    it('tests boarders.Rules setup for Breakthrough', () => {
+        let rules = Breakthrough.createRules();
+        let game = new boarders.GameState(rules);
+        assert.equal(rules.cellList().length, 64);
+        assert.equal(rules._initialEnumPieces.length, 64)
+        let board = game.setupHtml($("<div>"));
+        
+        let nCells = 0;
+        for (let cell of rules.cellList()) {
+            assert.equal(rules.getCell(cell.id), cell);
+            assertSeenOnce(cell);
+            assert.equal(cell.enumId(), nCells++);
+        }
 
-        var pawn = rules.piece("pawn");
-        pawn.image("white", "images/Chess/wpawn_45x45.svg");
-        pawn.image("black", "images/Chess/bpawn_45x45.svg");
+        // Check that the rule representation has the correct number of pieces.
+        let numPieces = 0;
+        for (let piece of rules._initialEnumPieces) {
+            if (piece > -1) {
+                numPieces++;
+            }
+        }
+        assert.equal(numPieces, 32);
 
-        rules.finalizeBoardShape();
-
-        rules.boardSetup("pawn", "white", "a1 b1 c1 d1 e1 f1 g1 h1".split(" "));
-        rules.boardSetup("pawn", "white", "a2 b2 c2 d2 e2 f2 g2 h2".split(" "));
-        rules.boardSetup("pawn", "black", "a7 b7 c7 d7 e7 f7 g7 h7".split(" "));
-        rules.boardSetup("pawn", "black", "a8 b8 c8 d8 e8 f8 g8 h8".split(" "));
-
-        rules.direction("board-1", "forward-left", -1, 1);
-        rules.direction("board-1", "forward", 0, 1);
-        rules.direction("board-1", "forward-right", 1, 1);
-
-        rules.direction("board-1", "backward-left", -1, -1);
-        rules.direction("board-1", "backward", 0, -1);
-        rules.direction("board-1", "backward-right", 1, -1);        
+        numPieces = 0;
+        for (let cell of rules.cellList()) {
+            if (game._enumPieces[cell.enumId()] == -1) {
+                assert.notOk(cell.uiCell.piece());
+            } else {
+                numPieces++;
+                assertSeenOnce(cell.uiCell.piece());
+            }
+            assert.equal(cell.uiCell.gridCell, cell);
+        }
+        assert.equal(numPieces, 32);
     });
 });
