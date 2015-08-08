@@ -23,6 +23,7 @@ import {arrayWithValueNTimes, mapUntilN, mapNByM} from "./common";
 import * as anyboard from "./anyboard";
 
 // Helpers:
+
 function stringListCast(players:string[]|string):string[] {
     if (typeof players === "string") {
         return [players];

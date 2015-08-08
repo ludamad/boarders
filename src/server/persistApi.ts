@@ -106,8 +106,8 @@ export class DatabaseConnection extends BaseDatabaseConnection {
     }
     
     // -- Game instance( creation, querying, joining: -- //);
-    newGameInstance(session, rule_id, params, callback) {
-        this.insert('game_instances', {rule_id: params.rule_id}, (gameInst) => {
+    newGameInstance(session, rule_id:number, callback) {
+        this.insert('game_instances', {rule_id}, (gameInst) => {
             this.joinGameInstance(session, gameInst.id, true);
             if (callback) callback(gameInst);
         });
@@ -137,7 +137,7 @@ export class DatabaseConnection extends BaseDatabaseConnection {
     }
 
     joinGameInstance(session, game_instance_id, is_host, callback?) {
-        this.insert('game_instance_users', {game_instance_id, is_host, user_id: session.user_id}, callback);
+        this.insert('game_instance_users', {game_instance_id, is_host, user_id: session.user_id, player_kind: "bot"}, callback);
     }
     
     storeGameInstanceMessage(session, game_instance_id, message, callback?) {
