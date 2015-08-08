@@ -5,15 +5,13 @@
 
 "use strict";
 
-import * as common from "./common";
+import * as common from "../common/common";
 
 import * as http from 'http';
 import * as fs from "fs";
 import * as C from 'cli-color';
 import * as bodyParser from 'body-parser';
-
-// We sacrifice typing for 'express' because it does not work with ES6-style import.
-var express = require('express');
+import * as express from "express";
 
 // Handles sessions and database access
 import * as persist from "./persistApi";

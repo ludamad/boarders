@@ -3,7 +3,7 @@
 
 import * as sqlite3 from "sqlite3";
 import * as uuid from "node-uuid";
-import * as jsutil from "./common";
+import * as jsutil from "../common/common";
 
 "use strict"; // Enable strict mode.
 

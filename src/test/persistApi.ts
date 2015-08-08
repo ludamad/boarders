@@ -4,6 +4,7 @@ declare var describe, require, before, it;
 var {assert} = require('chai');
 require('chai').config.includeStack = true;
 
+import {promisify as P} from "../common/common";
 import * as persist from "../server/persistApi";
 
 // Fill in with mock data:
@@ -31,14 +32,14 @@ function validateMockDbPre(db:persist.DatabaseConnection, callback) {
 
 // Fill in with mock data:
 // - a game instance with the two above users, and a message.
-function mockDb(db:persist.DatabaseConnection, callback) {
-    return mockDbPre(db, () => 
-        get1(db, "game_rules", "name = \"Breakthrough\"", (breakthrough) => 
-            db.newGameInstance((<any>db).session1, breakthrough.id, (instance) => 
-                db.newGameInstance((<any>db).session2, breakthrough.id, (instanceOther) => 
-                    db.joinGameInstance((<any>db).session2, instance.id, false, () => 
-                        db.storeGameInstanceMessage((<any>db).session2, instance.id, "This is a sample message from not.ludamad.", () => 
-                            validateMockDb(db, callback)))))));
+async function mockDb(db:persist.DatabaseConnection) {
+    await P(mockDbPre)(db);
+    var breakthrough = await P(get1)(db, "game_rules", "name = \"Breakthrough\"");
+    // var instance = await P(db.newGameInstance.bind(db))((<any>db).session1, breakthrough.id);
+    // var instanceOther = await P(db.newGameInstance.bind(db))((<any>db).session2, breakthrough.id);
+    // await P(db.joinGameInstance.bind(db))((<any>db).session2, instance.id, false);
+    // await P(db.storeGameInstanceMessage.bind(db))((<any>db).session2, instance.id, "This is a sample message from not.ludamad.");
+    // await P(validateMockDb)(db);
 }
 
 // Validate above mock data.
@@ -61,7 +62,6 @@ function get1(db:persist.DatabaseConnection, tableName, whereClause, callback) {
 }
 
 describe("persist.DatabaseConnection, sqlite3 in memory", () => {
-    var db;
-    db = new persist.DatabaseConnection();
-    return it("should validate sample data insertion", (doneCallback) => mockDb(db, doneCallback));
+    var db = new persist.DatabaseConnection();
+    return it("should validate sample data insertion", () => mockDb(db));
 });

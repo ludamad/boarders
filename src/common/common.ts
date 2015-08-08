@@ -4,9 +4,11 @@
 
 // Based on TypeScript/compiler/core.ts, by Microsoft, released under Apache License 2.0
 
-interface Promisify<T> {
-    (callback): (any, T) => Promise<T>;
-}
+/// <reference path="./es6-promisify.d.ts"/>
+
+import _promisify from "es6-promisify";
+
+export var promisify = _promisify;
 
 export declare var require : (string) => any;
 
@@ -19,11 +21,6 @@ require("babel-runtime/helpers/interop-require-wildcard")["default"] = function(
     // Return now-patched module:
     return obj;
 }
-
-var _promisify = require("es6-promisify");
-export function promisify<T>(callback: (any, T) => T): Promise<T> {
-    return _promisify(callback);
-};
 
 export const enum Comparison {
     LessThan    = -1,

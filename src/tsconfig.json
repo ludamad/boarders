@@ -32,13 +32,16 @@
         "./client/ember-data.d.ts",
         "./client/jmarine/ai-spawn.ts",
         "./client/loader.ts",
+        "./common/common.ts",
+        "./common/es6-promisify.d.ts",
         "./native/ui-test-board.ts",
         "./native/ui-test-loader.ts",
-        "./server/common.ts",
         "./server/loader.ts",
         "./server/main.ts",
         "./server/persistApi.ts",
+        "./server/persistApiPromised.ts",
         "./test/anyboard.ts",
-        "./test/persistApi.ts"
+        "./test/persistApi.ts",
+        "./test/persistApiPromised.ts"
     ]
 }
