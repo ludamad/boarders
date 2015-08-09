@@ -3,8 +3,13 @@ declare var describe, before, it;
 var {assert} = require('chai');
 require('chai').config.includeStack = true;
 
-import {zrfEvents} from "../client/zrf/zrfObjectModel";
+import {zrfNodes, _emitSampleCompilerPass, _emitCompilerPassInterface} from "../client/zrf/zrfObjectModel";
 import * as zrfparser from "../client/zrf/zrfparser";
+
+
+_emitSampleCompilerPass();
+console.log("______")
+_emitCompilerPassInterface();
 
 var SAMPLE_ZRF:string; // At end of file
 

@@ -400,16 +400,16 @@ function algebraicCellNamingScheme(x, y) {
 // Game rules object.
 // This is user facing code, use getters and underscored members:
 export class Rules {
-    _cellEnumerator = new Enumerator<Cell>();
-    _playerAis = [];
+    private _cellEnumerator = new Enumerator<Cell>();
+    private _playerAis = [];
     _players:Player[] = [];
-    _grids:Grid[] = [];
-    _turnsCanPass:boolean = false;
-    _stacks = [];
+    private _grids:Grid[] = [];
+    private _turnsCanPass:boolean = false;
+    private _stacks = [];
     _pieces:Piece[] = [];
     _initialEnumPieces:number[] = [];
     _initialEnumOwners:number[] = [];
-    _finalized = false;
+    private _finalized = false;
 
     public direction(grid, name, dx, dy) {
         if (typeof grid === "string") {

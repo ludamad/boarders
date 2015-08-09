@@ -1,5 +1,11 @@
 // From some random github, TODO credit this
-export function parse(str:string) {
+
+export interface SExp {
+    head: string|SExp,
+    tail?: SExp
+}
+
+export function parse(str:string):SExp {
     var stack = { head: null, tail: null },
         dot = false,
         i = 0, j = 0;

@@ -1,11 +1,16 @@
 "use strict";
 
-import {sexprCopy, s2l, s2ll, sexprVisitNamed, sexpToPairs} from "./sexpUtils";
+import {SExp} from "./sexp"
+import {
+    sexprCopy, s2l, sexpToSexps, sexpToStrings, sexprVisitNamed, sexpToPairs, 
+    sexpIntCast, sexpStringCast, sexpToLabeledPair, sexpToLabeledPairs,
+    sexpToStringPair, sexpFoldStringPairs
+} from "./sexpUtils";
 
 function subevent(type:any, name?:string) : PropertyDecorator {
     return function(target, propertyKey: string) {
         target._subevents = target._subevents || {};
-        console.log(target, propertyKey)
+        // console.log(target, propertyKey)
         target._subevents[name || propertyKey] = {propertyKey, type};
     }
 }
@@ -18,58 +23,69 @@ type Option = {label: string, value:any};
 // TODO: See if Typescript bug is creating the need for this:
 var Option = "hackForMetadataPurposes";
 
-function hasOwnProperty(obj, key) {
+function hasOwnProperty(obj:Object, key:string) {
     return Object.prototype.hasOwnProperty.call(obj, key);
-}
-
-export abstract class Event {
-    /* Not actually set on class, used to declare the setting above: */
-    _subevents:StrMap<{propertyKey:string, type:any}>;
-    _classname:string;
-    processSubnodes(list:any[]) {
-        for (var {head, tail} of list) {
-            console.log(head, tail);
-            var value = s2l(tail);
-            var parsed = false;
-            if (hasOwnProperty(this._subevents, head)) {
-                _parseField(this, head, this._subevents[head], value);
-                parsed = true;
-            }
-            if (!parsed) {
-                console.log(`**NYI: ${this._classname} ${head}`);
-            }
-        }
-    }
-    print() {
-        console.log(pprint(this));
-    }
 }
 
 // Classes for the ZRF object model. Define parsing events with metadata.
 // The names of the classes themselves are used for matching events triggered.
-export module zrfEvents {
-    export class File extends Event {
+export module zrfNodes {
+    export abstract class Node {
+        /* Not actually set on class, used to declare the setting above: */
+        _subevents:StrMap<{propertyKey:string, type:any}>;
+        _classname:string;
+        processSubnodes(list:SExp) {
+            for (var {head, tail} of sexpToSexps(list)) {
+                var parsed = false;
+                if (typeof head === "string" && hasOwnProperty(this._subevents, head)) {
+                    _parseField(this, head, this._subevents[head], tail);
+                    parsed = true;
+                }
+                if (!parsed) {
+                    console.log(`**NYI: ${this._classname} ${head}`);
+                }
+            }
+        }
+        print() {
+            console.log(pprint(this));
+        }
+    }
+
+    export class File extends Node {
         @subevent("string")
             version:string;
         @subevent("Game", "game" /* Subevent name */)
             games:Game;
     }
 
-    export class Directions extends Event {
-        @subevent((S) => [S.map(s => s2l(s))])
-            dirs:string[];
+    export class Directions extends Node {
+        dirs:{name:string, dx:number, dy:number}[] = [];
+        processSubnodes(dirs:SExp) {
+            for (var dir of sexpToSexps(dirs)) {
+                var [name, dx, dy] = sexpToStrings(dir);
+                this.dirs.push({name, dx: parseInt(dx), dy: parseInt(dy)});
+
+            }
+        }
     }
 
-    export class Dimensions extends Event {
+    export class Dimensions extends Node {
         xLabels:string[];
         yLabels:string[];
+        x1:number; 
+        x2:number;
+        y1:number; 
+        y2:number;
         width:number;
         height:number;
-        processSubnodes([rows, cols]) {
-            var [yLabels, yBnds] = s2l(rows);
-            var [xLabels, xBnds] = s2l(cols);
-            var [x1, x2] = s2l(xBnds);
-            var [y1, y2] = s2l(yBnds);
+        processSubnodes(dirs:SExp) {
+            var [rows, cols] = sexpToSexps(dirs);
+            var [yLabels, yBnds] = sexpToLabeledPair(rows);
+            var [xLabels, xBnds] = sexpToLabeledPair(cols);
+            var [x1, x2] = sexpToStringPair(xBnds);
+            var [y1, y2] = sexpToStringPair(yBnds);
+            this.x1 = parseInt(x1), this.x2 = parseInt(x2);
+            this.x1 = parseInt(y1), this.x2 = parseInt(y2);
             this.xLabels = xLabels.split("/");
             this.yLabels = yLabels.split("/");
             this.width = this.xLabels.length;
@@ -77,23 +93,31 @@ export module zrfEvents {
         }
     }
 
-    export class Piece extends Event {
+    // Move logic forms its own crude language within Zillions:
+    export class MoveLogic extends Node {
+        moveLogic: SExp[];
+        processSubnodes(moveLogic) {
+            this.moveLogic = moveLogic;
+        }
+    }
+
+    export class Piece extends Node {
         @subevent("string")
             name:string;
         @subevent("string")
             help:string;
         @subevent((S, obj) => {
             obj.images = obj.images || {};
-            for (var [player, file] of sexpToPairs(S)) {
+            for (var [player, file] of sexpFoldStringPairs(S)) {
                 obj.images[player] = file;
             }
         }, "image" /*Event name*/)
             images:StrMap<string>;
-        @subevent((S) => S)
-            drops:any[];
+        @subevent("MoveLogic")
+            drops:MoveLogic;
     }
 
-    export class Grid extends Event {
+    export class Grid extends Node {
         @subevent(([x1,y1,x2,y2]) => {x1,y1,x2,y2})
             "start-rectangle": {x1:number, y1:number, x2:number, y2:number};
         @subevent("Dimensions")
@@ -102,22 +126,31 @@ export module zrfEvents {
             directions:Directions;
     }
 
-    export class Board extends Event {
+    export class Board extends Node {
         @subevent("string")
             image:string;
         @subevent("Grid")
             grid:Grid;
     }
 
-    
-    export class BoardSetup extends Event {
-        players:string[];
-        processSubnodes(players) {
-            this.players = players;
+    type PiecePlacements = {piece:string, squares:string[]}[];
+    type BoardSetupComponent = {player: string, pieces: PiecePlacements};
+
+    export class BoardSetup extends Node {
+        components : BoardSetupComponent[] = [];
+
+        processSubnodes(components) {
+            for (var {head: player, tail: pieceSetups} of components) {
+                var pieces:BoardSetupComponent = [];
+                for (var [piece, squares] of sexpToLabeledPairs(pieceSetups)) {
+                    pieces.push({piece, squares: sexpToStrings(squares)});
+                }
+                this.components.push({player, pieces});
+            }
         }
     }
 
-    export class EndCondition extends Event {
+    export class EndCondition extends Node {
         players:string[];
         condition:string[];
         processSubnodes([players, condition]) {
@@ -127,7 +160,7 @@ export module zrfEvents {
         }
     }
 
-    export class Game extends Event {
+    export class Game extends Node {
         // Metadata for parser, field name, field type.
         @subevent("string")   title:        string;
         @subevent("string")   description:  string;
@@ -135,7 +168,7 @@ export module zrfEvents {
         @subevent("string")   strategy:     string;
         @subevent("string*")  players:      string[];
         @subevent("string*") "turn-order":  string;
-        @subevent("string*") "board-setup": BoardSetup;
+        @subevent("BoardSetup") "board-setup": BoardSetup;
         @subevent("Board[]", "board") 
             boards: Board[];
         @subevent("Piece[]", "piece")
@@ -147,6 +180,48 @@ export module zrfEvents {
         @subevent(([label, value]) => {label, value})
             option: Option;
     }
+
+    export interface ZrfCompilerPass<T> {
+        File?(obj:File): T;
+        Directions?(obj:Directions): T;
+        Dimensions?(obj:Dimensions): T;
+        Piece?(obj:Piece): T;
+        Grid?(obj:Grid): T;
+        Board?(obj:Board): T;
+        BoardSetup?(obj:BoardSetup): T;
+        EndCondition?(obj:EndCondition): T;
+        Game?(obj:Game): T;
+    }
+}
+
+export function _emitCompilerPassInterface() {
+    console.log("interface ZrfCompilerPass<T> {");
+    for (var event of Object.keys(zrfNodes)) {
+        if (event === "Node") continue;
+        console.log(`    ${event}(obj:${event}): T;`)
+    }
+    console.log("}");
+}
+
+export function _emitSampleCompilerPass() {
+    console.log("var samplePass:zrf.ZrfCompilerPass<void> = {");
+    for (var event of Object.keys(zrfNodes)) {
+        if (event === "Node") continue;
+        var _class = zrfNodes[event];
+        console.log(`    ${event}(obj:zrf.${event}) {`);
+        for (var subevent of Object.keys(_class.prototype._subevents || {})) {
+            var {propertyKey, type} = _class.prototype._subevents[subevent];
+            if (propertyKey.indexOf("-") > -1) {
+                propertyKey = `["${propertyKey}"]`;
+            } else {
+                propertyKey = `.${propertyKey}`;
+            }
+            var tStr = typeof type == "string" ? type : "<function>";
+            console.log(`        obj${propertyKey}; // ${tStr}`)
+        }
+        console.log(`    },`);
+    }
+    console.log("}");
 }
 
 function _parseField(obj, field, {propertyKey, type}, value) {
@@ -178,23 +253,22 @@ function _parseField(obj, field, {propertyKey, type}, value) {
         //    assert.equal(typeof str, 'string')
         addData(value);
     } else if (type.substring(type.length-1,type.length) != '*') {
-        var newNode = new zrfEvents[type]();
-        console.log("CREATING " + type);
+        var newNode = new zrfNodes[type]();
         newNode.processSubnodes(value);
         addData(newNode);
     } else {
         // List of ZRF objects:
         type = type.substring(0, type.length - 1);
         addData(value.map(S => {
-            var newNode = new zrfEvents[type]();
+            var newNode = new zrfNodes[type]();
             newNode.processSubnodes(s2l(S));
             return newNode;
         }));
     }
 }
 
-for (var key of Object.keys(zrfEvents)) {
-    zrfEvents[key].prototype._classname = key;
+for (var key of Object.keys(zrfNodes)) {
+    zrfNodes[key].prototype._classname = key;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -270,7 +344,7 @@ function findAndReplaceDefines(S) {
     // Defines should be top level:
     var defines = [], newNodes = [];
     for (var node of s2l(S)) {
-        if (node.head === "define") {
+        if (typeof node !== "string" && node.head === "define") {
             defines.push(node.tail);
         } else {
             newNodes.push(node);
@@ -284,7 +358,7 @@ function findAndReplaceDefines(S) {
 
 export function sexpToZrfObjModel(S) {
     var nodes = findAndReplaceDefines(S);
-    var model = new zrfEvents.File();
+    var model = new zrfNodes.File();
     model.processSubnodes(nodes);
     console.log("<model>");
     model.print();
