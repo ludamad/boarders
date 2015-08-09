@@ -170,8 +170,8 @@ export class HtmlBoard {
         this.draggedPiece = null;
     }   
 
-    public getCellFromCell(cell:boarders.Cell):HtmlCell {
-        return this.getCell(cell.x(), cell.y());
+    public getCellFromCell(cell:boarders.GraphNode):HtmlCell {
+        return this.getCell(cell.x, cell.y);
     }
 
     public getPiece(x, y):HtmlPiece {

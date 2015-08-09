@@ -30,7 +30,7 @@ describe('mocha tests', function () {
         for (let cell of rules.cellList()) {
             assert.equal(rules.getCell(cell.id), cell);
             assertSeenOnce(cell);
-            assert.equal(cell.enumId(), nCells++);
+            assert.equal(cell.enumId, nCells++);
         }
 
         // Check that the rule representation has the correct number of pieces.
@@ -44,7 +44,7 @@ describe('mocha tests', function () {
 
         numPieces = 0;
         for (let cell of rules.cellList()) {
-            if (game._enumPieces[cell.enumId()] == -1) {
+            if (game._enumPieces[cell.enumId] == -1) {
                 assert.notOk(cell.uiCell.piece());
             } else {
                 numPieces++;

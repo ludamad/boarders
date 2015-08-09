@@ -1,4 +1,4 @@
-import {SExp} from "./sexp"
+import {SExp} from "./sexpParser"
 
 // These could be represented by a smaller number of more dynamic operations.
 // However, I favoured the more verbose approach that gave fairly good type information.

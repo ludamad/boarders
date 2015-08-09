@@ -1,4 +1,4 @@
-import {zrfNodes as zrf} from "./zrfObjectModel";
+import {zrfNodes as zrf} from "./zrfFromSexp";
 import * as boarders from "../boarders";
 
 function visitAll(node:zrf.Node, visitor:zrf.ZrfCompilerPass<void>) {

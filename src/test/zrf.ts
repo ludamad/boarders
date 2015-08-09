@@ -3,9 +3,8 @@ declare var describe, before, it;
 var {assert} = require('chai');
 require('chai').config.includeStack = true;
 
-import {zrfNodes, _emitSampleCompilerPass, _emitCompilerPassInterface} from "../client/zrf/zrfObjectModel";
-import * as zrfparser from "../client/zrf/zrfparser";
-
+import {zrfNodes, _emitSampleCompilerPass, _emitCompilerPassInterface} from "../client/zrf/zrfFromSexp";
+import {zrfParse} from "../client/zrf/zrfParser";
 
 _emitSampleCompilerPass();
 console.log("______")
@@ -15,7 +14,7 @@ var SAMPLE_ZRF:string; // At end of file
 
 describe("zrfParser", () => {
     it("should validate sample data insertion", (done) => {
-        var zrf = zrfparser.parse(SAMPLE_ZRF);
+        var zrf = zrfParse(SAMPLE_ZRF);
         done();
     });
 });

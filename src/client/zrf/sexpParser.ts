@@ -5,7 +5,7 @@ export interface SExp {
     tail?: SExp
 }
 
-export function parse(str:string):SExp {
+export function sexpParse(str:string):SExp {
     var stack = { head: null, tail: null },
         dot = false,
         i = 0, j = 0;

@@ -1,18 +1,18 @@
-import * as boarders from "./boarders";
+import {Rules, Piece, GameState}  from "./boarders";
 import {runEnginePlayer, stopEnginePlayer} from "./jmarine/ai-spawn";
 
 // More or less takes control of the game and UI logic.
 
-export function createRules():boarders.Rules {
-    var rules = new boarders.Rules();
+export function createRules():Rules {
+    var rules = new Rules();
 
     rules.player("white");
     rules.player("black");
     rules.grid("board-1", 8, 8);
 
-    var pawn = rules.piece("pawn");
-    pawn.image("white", "images/Chess/wpawn_45x45.svg");
-    pawn.image("black", "images/Chess/bpawn_45x45.svg");
+    var pawn:Piece = rules.piece("pawn");
+    pawn.setImage("white", "images/Chess/wpawn_45x45.svg");
+    pawn.setImage("black", "images/Chess/bpawn_45x45.svg");
 
     rules.finalizeBoardShape();
 
@@ -32,11 +32,11 @@ export function createRules():boarders.Rules {
     return rules;
 }
 
-export function setupBreakthrough(elem:JQuery):boarders.GameState {
+export function setupBreakthrough(elem:JQuery):GameState {
     var rules = createRules();
     
     var ai = rules.playerAi("Easy");
-    ai.thinkFunction((game:boarders.GameState, onFinishThinking) => {
+    ai.thinkFunction((game:GameState, onFinishThinking) => {
         // Interface with jmarine's AI:
         let contents = ["Breakthrough:"];
         if (game.currentPlayer() === "white") {
@@ -56,7 +56,7 @@ export function setupBreakthrough(elem:JQuery):boarders.GameState {
         return runEnginePlayer(5, gameString, onFinishThinking);
     });
 
-    var game = new boarders.GameState(rules);
+    var game = new GameState(rules);
 
     function queueAI() {
         return ai.think(game, (move) => {
