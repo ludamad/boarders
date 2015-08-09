@@ -33,6 +33,7 @@
         "./client/jmarine/ai-spawn.ts",
         "./client/loader.ts",
         "./client/zrf/sexp.ts",
+        "./client/zrf/sexpUtils.ts",
         "./client/zrf/zrf.ts",
         "./client/zrf/zrfObjectModel.ts",
         "./client/zrf/zrfparser.ts",

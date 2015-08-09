@@ -1,31 +1,66 @@
-export module zrfEvents {
-    function subevent(type:any, name?:string) {
-        // Property decorator:
-        return function(target: any, propertyKey: string) {
-            target.prototype._subevents = target.prototype._subevents || {};
-            target.prototype._subevents[name || propertyKey] = type;
+"use strict";
+
+import {sexprCopy, s2l, s2ll, sexprVisitNamed, sexpToPairs} from "./sexpUtils";
+
+function subevent(type:any, name?:string) : PropertyDecorator {
+    return function(target, propertyKey: string) {
+        target._subevents = target._subevents || {};
+        console.log(target, propertyKey)
+        target._subevents[name || propertyKey] = {propertyKey, type};
+    }
+}
+
+interface StrMap<T> {
+    [s: string]: T;
+}
+
+type Option = {label: string, value:any};
+// TODO: See if Typescript bug is creating the need for this:
+var Option = "hackForMetadataPurposes";
+
+function hasOwnProperty(obj, key) {
+    return Object.prototype.hasOwnProperty.call(obj, key);
+}
+
+export abstract class Event {
+    /* Not actually set on class, used to declare the setting above: */
+    _subevents:StrMap<{propertyKey:string, type:any}>;
+    _classname:string;
+    processSubnodes(list:any[]) {
+        for (var {head, tail} of list) {
+            console.log(head, tail);
+            var value = s2l(tail);
+            var parsed = false;
+            if (hasOwnProperty(this._subevents, head)) {
+                _parseField(this, head, this._subevents[head], value);
+                parsed = true;
+            }
+            if (!parsed) {
+                console.log(`**NYI: ${this._classname} ${head}`);
+            }
         }
     }
-
-    interface StrMap<T> {
-        [s: string]: T;
+    print() {
+        console.log(pprint(this));
     }
-    type Option = {label: string, value:any};
+}
 
-    export class File {
+// Classes for the ZRF object model. Define parsing events with metadata.
+// The names of the classes themselves are used for matching events triggered.
+export module zrfEvents {
+    export class File extends Event {
         @subevent("string")
             version:string;
-        @subevent("Game")
+        @subevent("Game", "game" /* Subevent name */)
             games:Game;
     }
 
-    export class Directions {
+    export class Directions extends Event {
         @subevent((S) => [S.map(s => s2l(s))])
             dirs:string[];
     }
-    
 
-    class Dimensions {
+    export class Dimensions extends Event {
         xLabels:string[];
         yLabels:string[];
         width:number;
@@ -42,23 +77,23 @@ export module zrfEvents {
         }
     }
 
-    export class Piece {
+    export class Piece extends Event {
         @subevent("string")
             name:string;
         @subevent("string")
             help:string;
         @subevent((S, obj) => {
             obj.images = obj.images || {};
-            for (var [player, file] of toPairs(S)) {
+            for (var [player, file] of sexpToPairs(S)) {
                 obj.images[player] = file;
             }
         }, "image" /*Event name*/)
             images:StrMap<string>;
         @subevent((S) => S)
-            drops;
+            drops:any[];
     }
 
-    export class Grid {
+    export class Grid extends Event {
         @subevent(([x1,y1,x2,y2]) => {x1,y1,x2,y2})
             "start-rectangle": {x1:number, y1:number, x2:number, y2:number};
         @subevent("Dimensions")
@@ -67,7 +102,7 @@ export module zrfEvents {
             directions:Directions;
     }
 
-    export class Board {
+    export class Board extends Event {
         @subevent("string")
             image:string;
         @subevent("Grid")
@@ -75,14 +110,14 @@ export module zrfEvents {
     }
 
     
-    class BoardSetup {
+    export class BoardSetup extends Event {
         players:string[];
         processSubnodes(players) {
             this.players = players;
         }
     }
 
-    class EndCondition {
+    export class EndCondition extends Event {
         players:string[];
         condition:string[];
         processSubnodes([players, condition]) {
@@ -92,7 +127,7 @@ export module zrfEvents {
         }
     }
 
-    export class Game {
+    export class Game extends Event {
         // Metadata for parser, field name, field type.
         @subevent("string")   title:        string;
         @subevent("string")   description:  string;
@@ -101,98 +136,38 @@ export module zrfEvents {
         @subevent("string*")  players:      string[];
         @subevent("string*") "turn-order":  string;
         @subevent("string*") "board-setup": BoardSetup;
-        @subevent("Board[]")  boards: Board[];
-        @subevent("Piece[]")  pieces: Piece[];
-        @subevent("EndCondition[]") 
+        @subevent("Board[]", "board") 
+            boards: Board[];
+        @subevent("Piece[]", "piece")
+            pieces: Piece[];
+        @subevent("EndCondition[]", "draw-condition") 
             "draw-conditions": EndCondition[];
-        @subevent("EndCondition[]") 
+        @subevent("EndCondition[]", "win-condition") 
             "win-conditions": EndCondition[];
         @subevent(([label, value]) => {label, value})
             option: Option;
     }
 }
 
-function sexprCopy(sexpr) {
-    if (sexpr == null || typeof sexpr !== "object") {
-        return sexpr;
-    }
-    return {
-        head: sexprCopy(sexpr.head),
-        tail: sexprCopy(sexpr.tail)
-    };
-}
-
-function sexprVisitNamed(sexpr, f) {
-    if (sexpr == null) {
-        return;
-    }
-    if (typeof sexpr.head === "string") {
-        f(sexpr);
-    }
-    // Purposefully allow head to be turned into an object which we further investigate:
-    if ((sexpr.head != null) && typeof sexpr.head === "object") {
-        sexprVisitNamed(sexpr.head, f);
-    }
-    return sexprVisitNamed(sexpr.tail, f);
-}
-
-// Convert an s-expression into a list of expressions
-function s2l(sexpr) {
-    var l;
-    l = [];
-    while (sexpr && sexpr.head !== null) {
-        l.push(sexpr.head);
-        sexpr = sexpr.tail;
-    }
-    return l;
-}
-
-function isArray(obj) {
-    return (obj != null) && (obj.constructor === Array);
-}
-
-// Convert an s-expression into a list of lists of expressions
-function s2ll(sexpr) {
-    return [s2l(sexpr).map((S) => s2l(S))];
-}
-
-// Fold an s-expression list into a list of pairs of s-expressions
-function toPairs(l) {
-    var pairs = [];
-    var i = 0;
-    while (i < l.length) {
-        pairs.push([l[i], l[i + 1]]);
-        i += 2;
-    }
-    return pairs;
-}
-
-function _parseField(obj, field, type, value) {
-    var member = field;
+function _parseField(obj, field, {propertyKey, type}, value) {
+    // console.log({func: "_parseField", obj, field, type, value});
 
     var addData = (v) => {
-        return obj[member] = v;
+        return obj[propertyKey] = v;
     };
-    if (typeof type === "object") {
-        field = field.substring(0, field.length - 1);
-        type = type[0];
+    if (typeof type === "string" && type.substring(type.length - 2, type.length) === "[]") {
+        type = type.substring(0, type.length - 2);
         addData = (v) => {
-            console.log(member);
-            console.log(v);
-            if (obj[member] == null) {
-                obj[member] = [];
-            }
-            return obj[member].push(v);
+            obj[propertyKey] = obj[propertyKey] || [];
+            return obj[propertyKey].push(v);
         };
     }
 
     if (value === null) {
         return console.log("**NOT FOUND: " + obj._classname + " " + field);
-    }
-
-    // Handler function:
+    } // Handler function:
     else if (typeof type === 'function') {
-        addData(type.bind(obj)(value));
+        addData(type(value, obj));
     } else if (type === 'string') {
         // Simple atom (string):
         //assert.equal(value.length, 1)
@@ -203,13 +178,28 @@ function _parseField(obj, field, type, value) {
         //    assert.equal(typeof str, 'string')
         addData(value);
     } else if (type.substring(type.length-1,type.length) != '*') {
-        addData(new zrfEvents[type](value));
+        var newNode = new zrfEvents[type]();
+        console.log("CREATING " + type);
+        newNode.processSubnodes(value);
+        addData(newNode);
     } else {
         // List of ZRF objects:
         type = type.substring(0, type.length - 1);
-        addData(value.map(S => new zrfEvents[type](s2l(S))));
+        addData(value.map(S => {
+            var newNode = new zrfEvents[type]();
+            newNode.processSubnodes(s2l(S));
+            return newNode;
+        }));
     }
 }
+
+for (var key of Object.keys(zrfEvents)) {
+    zrfEvents[key].prototype._classname = key;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// ZRF utils
+///////////////////////////////////////////////////////////////////////////////
 
 // Pretty print a ZRF node:
 function pprint(V, indent = 0) {
@@ -219,7 +209,7 @@ function pprint(V, indent = 0) {
     }
     if (typeof V !== "object") {
         return (V != null ? V.toString() : clc.yellow("null")) + "\n";
-    } else if (isArray(V)) {
+    } else if (Array.isArray(V)) {
         s += "\n";
         V.forEach((v) => s += t + "- " + (pprint(v, indent + 2)));
     } else {
@@ -230,9 +220,74 @@ function pprint(V, indent = 0) {
         }
         for (var k of Object.keys(V)) {
             if (V[k] != null) {
-                return s += t + " " + (clc.green(k)) + " " + (pprint(V[k], indent + 1));
+                s += t + " " + (clc.green(k)) + " " + (pprint(V[k], indent + 1));
             }
         }
     }
     return s;
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// ZRF macro substitution
+///////////////////////////////////////////////////////////////////////////////
+
+//Macro substitution for arguments eg $1, $2:
+
+function replaceArguments(S, replacements) {
+    return sexprVisitNamed(S, (child) => {
+        if (replacements[child.head] != null) {
+            var r = sexprCopy(replacements[child.head]);
+            return child.head = r;
+        }
+    });
+}
+
+function replaceDefines(S, defines) {
+    if ((S == null) || typeof S !== "object") {
+        return;
+    }
+    if (typeof S.head !== "object") {
+        for (var {head, tail} of defines) {
+            if (S.head === head) {
+                var args = s2l(S.tail);
+                var replacements = {};
+                for (var i = 0; i < args.length; i++) {
+                    replacements["$" + (i+1)] = args[i];
+                }
+                var newObj = sexprCopy(tail);
+                replaceArguments(newObj, replacements);
+                S.head = newObj.head;
+                S.tail = newObj.tail;
+            }
+        }
+    } else {
+        replaceDefines(S.head, defines);
+    }
+    return replaceDefines(S.tail, defines);
+}
+
+function findAndReplaceDefines(S) {
+    // Defines should be top level:
+    var defines = [], newNodes = [];
+    for (var node of s2l(S)) {
+        if (node.head === "define") {
+            defines.push(node.tail);
+        } else {
+            newNodes.push(node);
+        }
+    }
+    for (var v of newNodes) {
+        replaceDefines(v, defines);
+    }
+    return newNodes;
+}
+
+export function sexpToZrfObjModel(S) {
+    var nodes = findAndReplaceDefines(S);
+    var model = new zrfEvents.File();
+    model.processSubnodes(nodes);
+    console.log("<model>");
+    model.print();
+    console.log("</model>");
+    return model;
+};

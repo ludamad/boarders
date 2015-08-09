@@ -39,7 +39,7 @@ SAMPLE_ZRF = `
    (players X O)
    (turn-order X O)
    (board
-        (image "images\TicTacToe\TTTbrd.bmp")
+        (image "images\\TicTacToe\\TTTbrd.bmp")
         (grid
             (start-rectangle 16 16 112 112) ; top-left position
             (dimensions ;3x3
@@ -51,8 +51,8 @@ SAMPLE_ZRF = `
    (piece
         (name man)
 		(help "Man: drops on any empty square")
-		(image X "images\TicTacToe\TTTX.bmp"
-		       O "images\TicTacToe\TTTO.bmp")
+		(image X "images\\TicTacToe\\TTTX.bmp"
+		       O "images\\TicTacToe\\TTTO.bmp")
         (drops (add-to-empty))
    )
    (board-setup

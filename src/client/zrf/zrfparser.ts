@@ -1,5 +1,5 @@
 import * as sexp from "./sexp"
-import {sexpToZrfObjModel} from "./zrf";
+import {sexpToZrfObjModel} from "./zrfObjectModel";
 
 // Raw s-expression parsing:
 export function parseRaw(content) {
