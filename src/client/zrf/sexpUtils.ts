@@ -29,7 +29,7 @@ export function sexprVisitNamed(sexpr:SExp, f:(SExp)=>void) {
 }
 
 // Convert an s-expression into a list of expressions
-export function s2l(sexpr:SExp): (string|SExp)[] {
+export function sexpToList(sexpr:SExp): (string|SExp)[] {
     var l:(string|SExp)[] = [];
     while (sexpr && sexpr.head !== null) {
         l.push(sexpr.head);
@@ -40,18 +40,19 @@ export function s2l(sexpr:SExp): (string|SExp)[] {
 
 function checkString(val, wanted) {
     if ((typeof val === "string") !== wanted) {
-        throw new Error("Not expecting string!");
+        if (wanted) throw new Error(`Expecting string for "${val}"!`);
+        else throw new Error(`Not expecting string "${val}"!`);
     }
 }
 
 export function sexpToStrings(sexpr:SExp): string[] {
-    var list = s2l(sexpr);
+    var list = sexpToList(sexpr);
     for (var val of list) checkString(val, true);
     return <string[]>list;
 }
 
 export function sexpToSexps(sexpr:SExp): SExp[] {
-    var list = s2l(sexpr);
+    var list = sexpToList(sexpr);
     for (var val of list) checkString(val, false);
     return <SExp[]>list;
 }
@@ -82,23 +83,25 @@ export function sexpStringCast(s:string|SExp):string {
 }
 
 export function sexpToLabeledPair(sexpr:SExp):[string, SExp] {
-    var pair = s2l(sexpr);
-    if (pair.length !== 2) {
-        throw new Error("Expected pair!");
-    }
-    if (typeof pair[0] !== "string" || typeof pair[1] === "string") {
+    var pair = sexpToList(sexpr);
+    if (typeof pair[0] !== "string" || !pair[1] || typeof pair[1] === "string") {
         throw new Error("Expected string+SExp pair!");
     }
     return <[string, SExp]>pair;
 }
 
-export function sexpToLabeledPairs(sexpr:SExp):[string, SExp][] {
-    return sexpToSexps(sexpr).map(sexpToLabeledPair);
+export function sexpCheckLabeled(sexpr:SExp):{head:string, tail?:SExp} {
+    checkString(sexpr.head, true);
+    return <any>sexpr;
 }
+
+// export function sexpToLabeledPairs(sexpr:SExp):[string, SExp][] {
+//     return sexpToSexps(sexpr).map(sexpToLabeledPair);
+// }
 
 // Forgive the duplication.
 export function sexpToStringPair(sexpr:SExp):[string, string] {
-    var pair = s2l(sexpr);
+    var pair = sexpToList(sexpr);
     if (pair.length !== 2) {
         throw new Error("Expected pair!");
     }
@@ -108,16 +111,25 @@ export function sexpToStringPair(sexpr:SExp):[string, string] {
     return <[string, string]>pair;
 }
 
-// Fold an s-expression list into a list of pairs of s-expressions
-export function sexpFoldStringPairs(l:(string|SExp)[]):[string, string][] {
+// Fold an s-expression into a list of pairs of s-expressions
+export function sexpFoldStringPairs(sexp:SExp):[string, string][] {
     var pairs:[string, string][] = [];
     var i = 0;
+    var l = sexpToList(sexp);
     while (i < l.length) {
-        if (typeof l[i] === "string" || typeof l[i + 1] === "string") {
-            throw new Error("Expected string+SExp pair!");
+        if (typeof l[i] !== "string" || typeof l[i + 1] !== "string") {
+            throw new Error("Expected string+string pair!");
         }
         pairs.push(<[string, string]>[l[i], l[i + 1]]);
         i += 2;
     }
     return pairs;
+}
+
+export function sexpBoxIfString(sexpr:string|SExp): SExp {
+    return (typeof sexpr === "string") ? {head: sexpr} : sexpr;
+}
+
+export function sexpToInts(sexpr:SExp): number[] {
+    return sexpToList(sexpr).map(sexpIntCast);
 }

@@ -2,9 +2,9 @@
 
 import {SExp} from "./sexp"
 import {
-    sexprCopy, s2l, sexpToSexps, sexpToStrings, sexprVisitNamed, sexpToPairs, 
-    sexpIntCast, sexpStringCast, sexpToLabeledPair, sexpToLabeledPairs,
-    sexpToStringPair, sexpFoldStringPairs
+    sexprCopy, sexpToList, sexpToSexps, sexpToStrings, sexprVisitNamed, sexpToPairs, 
+    sexpToLabeledPair, sexpStringCast, sexpToStringPair, sexpBoxIfString,
+    sexpFoldStringPairs, sexpToInts, sexpCheckLabeled
 } from "./sexpUtils";
 
 function subevent(type:any, name?:string) : PropertyDecorator {
@@ -34,9 +34,10 @@ export module zrfNodes {
         /* Not actually set on class, used to declare the setting above: */
         _subevents:StrMap<{propertyKey:string, type:any}>;
         _classname:string;
-        processSubnodes(list:SExp) {
-            for (var {head, tail} of sexpToSexps(list)) {
+        processSubnodes(sexp:SExp) {
+            for (var {head, tail} of sexpToSexps(sexp)) {
                 var parsed = false;
+                console.log({head, tail});
                 if (typeof head === "string" && hasOwnProperty(this._subevents, head)) {
                     _parseField(this, head, this._subevents[head], tail);
                     parsed = true;
@@ -106,9 +107,9 @@ export module zrfNodes {
             name:string;
         @subevent("string")
             help:string;
-        @subevent((S, obj) => {
+        @subevent((sexp:SExp, obj) => {
             obj.images = obj.images || {};
-            for (var [player, file] of sexpFoldStringPairs(S)) {
+            for (var [player, file] of sexpFoldStringPairs(sexp)) {
                 obj.images[player] = file;
             }
         }, "image" /*Event name*/)
@@ -118,7 +119,10 @@ export module zrfNodes {
     }
 
     export class Grid extends Node {
-        @subevent(([x1,y1,x2,y2]) => {x1,y1,x2,y2})
+        @subevent((sexp:SExp) => {
+            var [x1,y1,x2,y2] = sexpToInts(sexp);
+            return {x1,y1,x2,y2};
+        })
             "start-rectangle": {x1:number, y1:number, x2:number, y2:number};
         @subevent("Dimensions")
             dimensions:Dimensions;
@@ -139,10 +143,10 @@ export module zrfNodes {
     export class BoardSetup extends Node {
         components : BoardSetupComponent[] = [];
 
-        processSubnodes(components) {
-            for (var {head: player, tail: pieceSetups} of components) {
-                var pieces:BoardSetupComponent = [];
-                for (var [piece, squares] of sexpToLabeledPairs(pieceSetups)) {
+        processSubnodes(sexp:SExp) {
+            for (var [player, pieceSetups] of sexpToSexps(sexp).map(sexpCheckLabeled)) {
+                var pieces:PiecePlacements = [];
+                for (var [piece, squares] of sexpToSexps(sexp).map(sexpCheckLabeled)) {
                     pieces.push({piece, squares: sexpToStrings(squares)});
                 }
                 this.components.push({player, pieces});
@@ -152,10 +156,11 @@ export module zrfNodes {
 
     export class EndCondition extends Node {
         players:string[];
-        condition:string[];
-        processSubnodes([players, condition]) {
+        condition:string|SExp;
+        processSubnodes(components:SExp) {
             // Parse conditions in separate file, same as directionality stuff.
-            this.players = players;
+            var [playersSexp, condition] = sexpToList(components).map(sexpBoxIfString);
+            this.players = sexpToStrings(playersSexp);
             this.condition = condition;
         }
     }
@@ -177,7 +182,10 @@ export module zrfNodes {
             "draw-conditions": EndCondition[];
         @subevent("EndCondition[]", "win-condition") 
             "win-conditions": EndCondition[];
-        @subevent(([label, value]) => {label, value})
+        @subevent((sexp:SExp) => {
+            var [label, value] = sexpToStringPair(sexp);
+            return {label, value};
+        })
             option: Option;
     }
 
@@ -224,15 +232,16 @@ export function _emitSampleCompilerPass() {
     console.log("}");
 }
 
-function _parseField(obj, field, {propertyKey, type}, value) {
+type ParseInfo = {propertyKey: string, type:any}
+function _parseField(obj:zrfNodes.Node, field:string, {propertyKey, type}:ParseInfo, value:SExp) {
     // console.log({func: "_parseField", obj, field, type, value});
 
-    var addData = (v) => {
+    var addData = (v:any) => {
         return obj[propertyKey] = v;
     };
     if (typeof type === "string" && type.substring(type.length - 2, type.length) === "[]") {
         type = type.substring(0, type.length - 2);
-        addData = (v) => {
+        addData = (v:any) => {
             obj[propertyKey] = obj[propertyKey] || [];
             return obj[propertyKey].push(v);
         };
@@ -247,21 +256,21 @@ function _parseField(obj, field, {propertyKey, type}, value) {
         // Simple atom (string):
         //assert.equal(value.length, 1)
         //assert.equal(typeof value[0], 'string')
-        addData(value[0]);
+        addData(sexpStringCast(value.head));
     } else if (type == 'string*') {
         // List of simple atoms (strings):
         //    assert.equal(typeof str, 'string')
-        addData(value);
+        addData(sexpToStrings(value));
     } else if (type.substring(type.length-1,type.length) != '*') {
         var newNode = new zrfNodes[type]();
         newNode.processSubnodes(value);
         addData(newNode);
     } else {
-        // List of ZRF objects:
+        // List of ZRF nodes:
         type = type.substring(0, type.length - 1);
-        addData(value.map(S => {
+        addData(sexpToSexps(value).map(subNode => {
             var newNode = new zrfNodes[type]();
-            newNode.processSubnodes(s2l(S));
+            newNode.processSubnodes(subNode);
             return newNode;
         }));
     }
@@ -323,7 +332,7 @@ function replaceDefines(S, defines) {
     if (typeof S.head !== "object") {
         for (var {head, tail} of defines) {
             if (S.head === head) {
-                var args = s2l(S.tail);
+                var args = sexpToList(S.tail);
                 var replacements = {};
                 for (var i = 0; i < args.length; i++) {
                     replacements["$" + (i+1)] = args[i];
@@ -340,20 +349,22 @@ function replaceDefines(S, defines) {
     return replaceDefines(S.tail, defines);
 }
 
-function findAndReplaceDefines(S) {
+function findAndReplaceDefines(S:SExp):SExp {
     // Defines should be top level:
-    var defines = [], newNodes = [];
-    for (var node of s2l(S)) {
+    var defines:SExp[] = [], newNode:SExp = {head: S.head};
+    var iter = newNode;
+    for (var node of sexpToList(S)) {
         if (typeof node !== "string" && node.head === "define") {
             defines.push(node.tail);
         } else {
-            newNodes.push(node);
+            // Relink nodes, removing the defines:
+            iter.tail = {head: node};
+            iter = iter.tail;
         }
     }
-    for (var v of newNodes) {
-        replaceDefines(v, defines);
-    }
-    return newNodes;
+    // Inline globally the result of the defines:
+    replaceDefines(newNode, defines);
+    return newNode;
 }
 
 export function sexpToZrfObjModel(S) {
