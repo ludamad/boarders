@@ -38,12 +38,16 @@ abstract class BaseDatabaseConnection {
     }
 
     async _serializeRest() {
-        await promisify(this._db.serialize.bind(this._db));
+        // Avoid passing an implicit argument to 'callback': This will be interpreted
+        // as an error in 'promisify'.
+        await promisify((callback) => {
+            this._db.serialize(() => {
+                callback();
+            });
+        });
     }
 
     async insert(tableName:string, data:any): Promise<any> {
-        console.log(":insert:")
-        console.log(tableName, data);
         // Promisifications (compatibility with callback APIs):
         var doInsert = promisify<string>((vals, callback) => {
             stmt.run(vals, function(error) {
@@ -61,14 +65,11 @@ abstract class BaseDatabaseConnection {
         var stmt = this._db.prepare(`insert into ${tableName} (${keyString}) values (${questionMarkString})`);
         // stmt.finalize();
         var newId:string = await doInsert(vals);
-        console.log(`newId ${newId}`);
         return this.get(tableName, 'id', newId);
     }
 
     async get(tableName:string, col:string, colVal:string): Promise<any> {
         var rows = await this.getGeneric(tableName, `${col} = ?`, [colVal]);
-        console.log(":get:");
-        console.log(rows);
         return rows[0];
     }
 
@@ -112,7 +113,6 @@ export class DatabaseConnection extends BaseDatabaseConnection {
 
     async getActiveGameInstances(): Promise<any> {
         var data = await this.getGeneric('game_instances', 'is_active = 1', []);
-        console.log(data);
         return data;
     }
 

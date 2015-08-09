@@ -58,7 +58,7 @@ abstract class BaseDatabaseConnection {
             callback(rows[0]);
         });
     }
-    
+
     getGeneric(tableName, whereClause, whereArgs, callback) {
         this._db.serialize( () => {
             var query = `SELECT * from ${tableName} WHERE ${whereClause}`;

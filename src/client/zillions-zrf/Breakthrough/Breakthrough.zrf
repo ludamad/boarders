@@ -1,0 +1,215 @@
+; *** Breakthrough v. 1.2
+; *** (c) 2000 W. D. Troyka
+; *** updated July 2001
+; *** dtroyka@justice.com
+
+; This rules file loads on Zillions of Games.  For more  
+; information, visit www.zillions-of-games.com.
+
+
+(define 5x5
+  (image "images\Breakthrough\Knight5x5.bmp")
+  (grid
+     (start-rectangle 5 9 53 57)
+     (dimensions
+         ("a/b/c/d/e" (49 0)) ; files
+         ("5/4/3/2/1" (0 49))) ; ranks
+     (directions (n 0 -1) (s 0 1)
+		(ne 1 -1) (nw -1 -1) (se 1 1) (sw -1 1)))
+  (symmetry Gold (n s)(s n) (nw sw)(sw nw) (ne se)(se ne))
+  (zone
+     (name win-zone)
+     (players Silver)
+     (positions a5 b5 c5 d5 e5))
+  (zone
+     (name win-zone)
+     (players Gold)
+     (positions a1 b1 c1 d1 e1))
+)
+
+(define 6x6
+  (image "images\Breakthrough\Knight6x6.bmp")
+  (grid
+     (start-rectangle 5 10 53 58)
+     (dimensions
+         ("a/b/c/d/e/f" (49 0)) ; files
+        ("6/5/4/3/2/1" (0 49))) ; ranks
+     (directions (n 0 -1) (s 0 1)
+		(ne 1 -1) (nw -1 -1) (se 1 1) (sw -1 1)))
+  (symmetry Gold (n s)(s n) (nw sw)(sw nw) (ne se)(se ne))
+  (zone
+     (name win-zone)
+     (players Silver)
+     (positions a6 b6 c6 d6 e6 f6))
+  (zone
+     (name win-zone)
+     (players Gold)
+     (positions a1 b1 c1 d1 e1 f1))
+)
+
+(define 7x7
+  (image "images\Breakthrough\Knight7x7.bmp")
+  (grid
+     (start-rectangle 5 10 53 58)
+     (dimensions
+         ("a/b/c/d/e/f/g" (49 0)) ; files
+         ("7/6/5/4/3/2/1" (0 49))) ; ranks
+     (directions (n 0 -1) (s 0 1)
+		(ne 1 -1) (nw -1 -1) (se 1 1) (sw -1 1)))
+  (symmetry Gold (n s)(s n) (nw sw)(sw nw) (ne se)(se ne))
+  (zone
+     (name win-zone)
+     (players Silver)
+     (positions a7 b7 c7 d7 e7 f7 g7))
+  (zone
+     (name win-zone)
+     (players Gold)
+     (positions a1 b1 c1 d1 e1 f1 g1))
+)
+
+
+(define 8x8
+  (image "images\Breakthrough\Knight8x8.bmp")
+  (grid
+     (start-rectangle 6 11 54 59)
+     (dimensions
+         ("a/b/c/d/e/f/g/h" (49 0)) ; files
+         ("8/7/6/5/4/3/2/1" (0 49))) ; ranks
+     (directions (n 0 -1) (s 0 1)
+		(ne 1 -1) (nw -1 -1) (se 1 1) (sw -1 1)))
+  (symmetry Gold (n s)(s n) (nw sw)(sw nw) (ne se)(se ne))
+  (zone
+     (name win-zone)
+     (players Silver)
+     (positions a8 b8 c8 d8 e8 f8 g8 h8))
+  (zone
+     (name win-zone)
+     (players Gold)
+     (positions a1 b1 c1 d1 e1 f1 g1 h1))
+)
+
+(define step ($1 (verify empty?) add))
+
+(define cap ($1 (verify not-friend?) add))
+
+(define lance
+      (name Lance)
+	  (help "Lance: moves forward or diagonally forward and
+		captures diagonally forward")
+      (description "A Lance can move forward or diagonally forward 
+		and captures diagonally forward.  You win by moving a 
+		Lance to the opposite side of the board.")
+      (image Silver "images\Breakthrough\silver.bmp" 
+		Gold "images\Breakthrough\gold.bmp")
+      (moves
+         (step n)
+	 (cap ne)
+	 (cap nw))
+)
+
+(game
+   (title "Breakthrough 5x5")
+   (description "Win by moving a piece to the opposite side.  Pieces move 
+	forward or\diagonally forward and capture diagonally forward.")
+   (history "Breakthrough v. 1.2   Copyright 2000  W. D. Troyka
+	\\
+	Breakthrough was the winner of the 2001 8x8 Game Design Competition\
+	sponsored by Abstract Games Magazine and the Strategy Gaming Society.")
+   (strategy "Several tactical elements of the game stand out.  The progress 
+	of a piece cannot be thwarted by a single defender.  It will always  
+	be possible either to move entirely around the range of the defender 
+	or to move to the square immediately in front (which is immune from 
+	capture) and then `skirt` diagonally around.  A proper defense requires 
+	that pieces work in tandem.  Skirting is not possible, for example, when 
+	two defenders are front-to-back or side-to-side.  Diagonal formations are 
+	easy to skirt through and should be used cautiously.
+	\\
+	Basic strategy consists of occupying the center, where pieces have maximum 
+	coverage, and keeping some defenders far enough back so that they can guard 
+	multiple attack routes.  As pieces progress, defensive coverage diminishes 
+	and the player becomes vulnerable to flanking maneuvers.  Offensively, you 
+	want to force enemy defenders to move forward in response to threats from 
+	one direction, thereby opening up attacks from another direction.  It is 
+	useful to have multiple forward pieces (`runners`) within striking distance 
+	of the far rank.  Loosely speaking, a runner is a piece that has progressed 
+	across the board as far as any enemy piece has.  If defensive positions 
+	collapse and the game becomes a simple race, a runner will win the game if 
+	it takes the first step.  
+	\\
+	A common formation is a column of friendly pieces.  The forward piece can 
+	serve as a runner, the rear piece offers wide defensive coverage, and the 
+	entire formation cannot be skirted.  A column may prove overwhelming when 
+	aimed at a depleted portion of the enemy side.  Phalanxes, pieces arranged 
+	side to side, are also common and are present in the initial array. 
+	Phalanxes cannot be skirted, and if one piece moves straight ahead, it will 
+	land on a guarded square. 
+	\\
+	Pieces arranged in columns or phalanxes do not protect one another.  This 
+	points to a fundamental tension in the game.  Pieces protect one another 
+	only along diagonals but diagonal formations are the easiest to penetrate. 
+ 	In many cases, a player is better off leaving pieces unguarded.
+	\\
+	Breakthrough is ultimately an offensive game.  Defensive positions will 
+	collapse as pieces move forward (as they must), and at some point a 
+	weakness, perhaps previously unidentified, will be exploited by a runner. 
+	Because the pieces have no choice but to move forward, the game develops 
+	quickly.  Draws are impossible.")
+   (music "Audio\Breakthrough\Grail.mid")
+   (opening-sound "Audio\Breakthrough\Horse.wav")
+   (win-sound "Audio\Breakthrough\Hurrah.wav")
+   (loss-sound "Audio\Breakthrough\Loss.wav")
+   (move-sound "Audio\Breakthrough\Clank.wav")
+   (release-sound "Audio\Breakthrough\Clank.wav")
+   (capture-sound "Audio\Breakthrough\Aagh.wav")
+   (players Silver Gold)
+   (turn-order Silver Gold)
+   (pass-turn forced)
+   (board (5x5))
+   (board-setup
+      (Silver
+         (Lance a1 b1 c1 d1 e1 
+		a2 b2 c2 d2 e2))
+      (Gold
+         (Lance a4 b4 c4 d4 e4
+		a5 b5 c5 d5 e5)))
+   (piece (lance))
+   (win-condition (Silver Gold) (absolute-config Lance (win-zone)))
+)
+
+(variant
+   (title "Breakthrough 6x6")
+   (board (6x6))
+   (board-setup
+      (Silver
+         (Lance a1 b1 c1 d1 e1 f1
+		a2 b2 c2 d2 e2 f2))
+      (Gold
+         (Lance a5 b5 c5 d5 e5 f5
+		a6 b6 c6 d6 e6 f6)))
+)
+
+(variant
+   (title "Breakthrough 7x7")
+   (board (7x7))
+   (board-setup
+      (Silver
+         (Lance a1 b1 c1 d1 e1 f1 g1 
+		a2 b2 c2 d2 e2 f2 g2))
+      (Gold
+         (Lance a6 b6 c6 d6 e6 f6 g6 
+		a7 b7 c7 d7 e7 f7 g7)))
+)
+
+
+(variant
+   (title "Breakthrough 8x8")
+   (board (8x8))
+   (board-setup
+      (Silver
+         (Lance a1 b1 c1 d1 e1 f1 g1 h1
+		a2 b2 c2 d2 e2 f2 g2 h2))
+      (Gold
+         (Lance a7 b7 c7 d7 e7 f7 g7 h7
+		a8 b8 c8 d8 e8 f8 g8 h8)))
+)
+

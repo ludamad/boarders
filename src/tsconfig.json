@@ -32,6 +32,10 @@
         "./client/ember-data.d.ts",
         "./client/jmarine/ai-spawn.ts",
         "./client/loader.ts",
+        "./client/zrf/sexp.ts",
+        "./client/zrf/zrf.ts",
+        "./client/zrf/zrfObjectModel.ts",
+        "./client/zrf/zrfparser.ts",
         "./common/common.ts",
         "./common/es6-promisify.d.ts",
         "./native/ui-test-board.ts",
@@ -42,6 +46,6 @@
         "./server/persistApiPromised.ts",
         "./test/anyboard.ts",
         "./test/persistApi.ts",
-        "./test/persistApiPromised.ts"
+        "./test/zrf.ts"
     ]
 }

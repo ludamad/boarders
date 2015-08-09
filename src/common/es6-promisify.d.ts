@@ -1,6 +1,6 @@
 
 declare module "es6-promisify" {
-    type NodeStyleCB<T> = (error:Error, val?:T) => void;
+    type NodeStyleCB<T> = (error?:Error, val?:T) => void;
     export default function promisify<T>( 
         toTransform: (done:NodeStyleCB<T>) => any
     ): () => Promise<T>;
