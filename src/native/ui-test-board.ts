@@ -1,6 +1,6 @@
 import * as anyboard from "../client/anyboard";
 
-import {setupBreakthrough} from "../client/Breakthrough";
+import {setupUiAndGame} from "../client/Breakthrough";
 import * as boarders from "../client/boarders";
 
 window.onerror = function(message: string, filename: string, lineno: number, colno: number, error:Error) {
@@ -11,5 +11,5 @@ window.onerror = function(message: string, filename: string, lineno: number, col
 
 // On load:
 $(() => {
-    setupBreakthrough($("#board-1"));
+    setupUiAndGame($("#board-1"));
 });

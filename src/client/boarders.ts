@@ -19,20 +19,20 @@
 
 "use strict";
 
-import {arrayWithValueNTimes, mapUntilN, mapNByM} from "./common";
+import {arrayWithValueNTimes, mapUntilN, mapNByM, unionToArray} from "../common/common";
 import * as anyboard from "./anyboard";
 
 // Helpers:
-
-function stringListCast(players:string[]|string):string[] {
-    if (typeof players === "string") {
-        return [players];
-    } else return players;
-}
+// 
+// function stringListCast(players:string[]|string):string[] {
+//     if (typeof players === "string") {
+//         return [players];
+//     } else return players;
+// }
 
 export abstract class RuleComponent {
-    enumId: number;
-    constructor(public rule:Rules) {
+    enumId:number;
+    constructor(public rules:Rules) {
     }
 }
 
@@ -57,9 +57,10 @@ export class GraphNode extends RuleComponent {
     uiCell:anyboard.HtmlCell = null;
     constructor(rules:Rules, public id, public parent, public x:number, public y:number) {
         super(rules);
+        rules.enums.graphNodes.add(this)
     }
 
-    public next(dir, val : any = this._directions[dir]) {
+    public next(dir, val : GraphNode = this._directions[dir]) {
         this._directions[dir] = val;
         return this._directions[dir];
     }
@@ -71,12 +72,6 @@ export abstract class Graph extends RuleComponent {
 
     // Enumeration refers to turning data about cells into 
     // a bunch of indices:
-
-    public _enumerateCells(enumerator:Enumerator<GraphNode>) {
-        for (var cell of this.cellList()) {
-            enumerator.add(cell);
-        }
-    }
 
     public _enumerateDir(enumerator, dir) {
         this._directions[dir] = arrayWithValueNTimes(-1, enumerator.total());
@@ -96,15 +91,18 @@ export class Grid extends Graph {
     _cells : GraphNode[][];
     _board : anyboard.HtmlBoard = null;
 
-    constructor(rules:Rules, public id, public _width, public _height, cellIds) {
+    constructor(rules:Rules, public width, public height, cellIds) {
         super(rules);
-        this._cells = mapNByM(_width, _height, (x, y) => 
+        this._cells = mapNByM(width, height, (x, y) => 
             new GraphNode(rules, cellIds(x, y), this, x, y)
         );
     }
 
     public direction(name, dx, dy) {
-        mapNByM(this._width, this._height, (x, y) => {
+        for (var cell of this.rules.cellList()) {
+            cell.next(name, null);
+        }
+        mapNByM(this.width, this.height, (x, y) => {
             // Set the cell's linked cell for this name
             if (this.getCell(x + dx, y + dy) != null) {
                 // Set the cell's linked cell for this name
@@ -141,16 +139,6 @@ export class Grid extends Graph {
         }
         return null;
     }
-
-    public width(_width : any = this._width) {
-        this._width = _width != null ? _width : this._width;
-        return this._width;
-    }
-
-    public height(_height : any = this._height) {
-        this._height = _height != null ? _height : this._height;
-        return this._height;
-    }
 }
 
 // This is user facing code, use getters and underscored members:
@@ -174,9 +162,9 @@ export class Piece extends RuleComponent {
         super(rules);
     }
 
-    public setImage(players:string|string[], img?): void{
-        for (var p of stringListCast(players)) {
-            this.images[p] = img;
+    public setImage(players:Player|Player[], img?): void{
+        for (var p of unionToArray(players)) {
+            this.images[p.id] = img;
         }
     }
 }
@@ -196,8 +184,8 @@ export class GameState {
     _playArea:anyboard.HtmlPlayArea = null;
 
     constructor(public _rules:Rules) {
-        this._enumOwners = _rules._initialEnumOwners.map((copy) => copy);
-        this._enumPieces = _rules._initialEnumPieces.map((copy) => copy);
+        this._enumOwners = _rules._initialState._enumOwners.map((copy) => copy);
+        this._enumPieces = _rules._initialState._enumPieces.map((copy) => copy);
     }
 
     public currentPlayerNum(_currentPlayerNum : any = this._currentPlayerNum) {
@@ -267,15 +255,15 @@ export class GameState {
     public setupHtml(container:JQuery):anyboard.HtmlPlayArea {
         this._playArea = new anyboard.HtmlPlayArea(container);
         for (var grid of this._rules.grids()) {
-            grid._board = this._playArea.board(grid.id, grid.width(), grid.height());
+            grid._board = this._playArea.board(grid.enumId, grid.width, grid.height);
         }
         this._playArea.setup();
 
         // Link the representations for easy end-user manipulation:
         for (var grid of this._rules.grids()) {
             grid._board.grid = grid;
-            for (var y = 0; y < grid.height(); y++) {
-                for (var x = 0; x < grid.width(); x++) {
+            for (var y = 0; y < grid.height; y++) {
+                for (var x = 0; x < grid.width; x++) {
                     grid._board.getCell(x,y).gridCell = grid.getCell(x,y);
                     grid.getCell(x,y).uiCell = grid._board.getCell(x,y);
                 }
@@ -361,38 +349,38 @@ class PlayerAi {
     }
 }
 
-// Default naming scheme, because chess:
-function algebraicCellNamingScheme(x, y) {
-    return String.fromCharCode(97 + x) + (1 + y).toString();
+export class Enumerators {
+    graphs = new Enumerator<Graph>();
+    graphNodes = new Enumerator<GraphNode>();
+    players = new Enumerator<Player>();
+    pieces = new Enumerator<Piece>();
 }
 
-export class Enumerators {
-    graphNodes = new Enumerator<GraphNode>();
-    cells = new Enumerator<GraphNode>();
+export class Options {
+    canPassOnTurn = false;
+}
+
+export class InitialState {
+    _currentPlayerNum:number = 0;
+    _enumOwners:number[] = [];
+    _enumPieces:number[] = [];
 }
 
 // Game rules object.
 // This is user facing code, use getters and underscored members:
 export class Rules {
-    private _cellEnumerator = new Enumerator<GraphNode>();
+    enums = new Enumerators();
     private _playerAis = [];
     _players:Player[] = [];
     private _grids:Grid[] = [];
     private _turnsCanPass:boolean = false;
     private _stacks = [];
     _pieces:Piece[] = [];
-    _initialEnumPieces:number[] = [];
-    _initialEnumOwners:number[] = [];
+    _initialState = new InitialState();
     private _finalized = false;
 
-    public direction(grid, name, dx, dy) {
-        if (typeof grid === "string") {
-            grid = this.getGrid(grid);
-        }
-        for (var cell of this.cellList()) {
-            cell.next(name, null);
-        }
-        return grid.direction(name, dx, dy);
+    public direction(grid, dx, dy) {
+        return grid.direction(dx, dy);
     }
 
     public _ensureNotFinalized() {
@@ -401,33 +389,36 @@ export class Rules {
         }
     }
 
-    public _ensureFinalized() {
+    public _ensureFinalized(finalize = false) {
         if (!this._finalized) {
-            throw new Error("Must call rules.finalizeBoardShape() before proceeding!");
+            if (!finalize) {
+                throw new Error("Must call rules.finalizeBoardShape() before proceeding!");
+            }
+            this.finalizeBoardShape();
         }
     }
 
     public finalizeBoardShape() {
         this._ensureNotFinalized();
         this._finalized = true;
-        for (var grid of this._grids) {
-            grid._enumerateCells(this._cellEnumerator);
-        }
-        this._initialEnumPieces = arrayWithValueNTimes(-1, this._cellEnumerator.total());
-        this._initialEnumOwners = arrayWithValueNTimes(-1, this._cellEnumerator.total());
+        this._initialState._enumPieces = arrayWithValueNTimes(-1, this.enums.graphNodes.total());
+        this._initialState._enumOwners = arrayWithValueNTimes(-1, this.enums.graphNodes.total());
     }
 
     public cellList() {
-        return this._cellEnumerator.list;
+        return this.enums.graphNodes.list;
+    }
+    
+    //TODO
+    public moveGenerator(throwaway) {
     }
 
-    public boardSetup(pieceId:string, playerId:string, cellIds:string[]):void {
-        this._ensureFinalized();
-        cellIds = stringListCast(cellIds);  // Ensure list
-        for (var cellId of cellIds) {
+    public boardSetup(piece:Piece, player:Player, cellIds:string[]):void {
+        this._ensureFinalized(/* Finalize if necessary: */true);
+        for (var cellId of unionToArray(cellIds)) {
             var cell = this.getCell(cellId);
-            this._initialEnumPieces[cell.enumId] = this.getPiece(pieceId).enumId;
-            this._initialEnumOwners[cell.enumId] = this.getPlayer(playerId).enumId;
+            this._initialState._enumPieces[cell.enumId] = piece.enumId;
+            this._initialState._enumOwners[cell.enumId] = player.enumId;
         }
     }
 
@@ -453,9 +444,9 @@ export class Rules {
         return player;
     }
 
-    public grid(name, w, h, cellNames = algebraicCellNamingScheme) {
+    public grid(w:number, h:number, cellNameCallback: (x:number, y:number)=>string) {
         this._ensureNotFinalized();
-        var grid = new Grid(this, name, w, h, cellNames);
+        var grid = new Grid(this, w, h, cellNameCallback);
         this._grids.push(grid);
         return grid;
     }
@@ -473,38 +464,6 @@ export class Rules {
                 return cell;
             }
         }
-        return null;
-    }
-
-    public getGrid(id):Grid {
-        for (var grid of this._grids) {
-            if (grid.id === id) {
-                return grid;
-            }
-        }
-    }
-
-    public getPlayer(id):Player {
-        for (var player of this._players) {
-            if (player.id === id) {
-                return player;
-            }
-        }
-    }
-
-    public getStack(id:string):Piece {
-        for (var stack of this._stacks) {
-            if (stack.id === id) {
-                return stack;
-            }
-        }
-    }
-    
-    public getPiece(id:string):Piece {
-        for (var piece of this._pieces) {
-            if (piece.id === id) {
-                return piece;
-            }
-        }
+        throw new Error("boarders.ts: Graph node was not found. Is your graph node naming convention consistent?");
     }
 }

@@ -22,10 +22,39 @@ require("babel-runtime/helpers/interop-require-wildcard")["default"] = function(
     return obj;
 }
 
+// NOTE: This function relies on 'T' being distinguishable from an Array at 
+// runtime.
+export function unionToArray<T>(arr:T|T[]):T[] {
+    if (Array.isArray(arr)) {
+        return arr;
+    } else {
+        return [arr];
+    }
+}
+
 export const enum Comparison {
     LessThan    = -1,
     EqualTo     = 0,
     GreaterThan = 1
+}
+
+export function mapUntilN<T>(n:number, func: (n:number)=>T): T[] {
+    var array:T[] = [];
+    for (var i = 0; i < n; i++) {
+        array.push(func(i));
+    }
+    return array;
+}
+
+export function mapNByM<T>(n:number, m:number, func: (x:number, y:number)=>T): T[][] {
+    var array:T[][] = [];
+    for (var y = 0; y < m; y++) {
+        array.push([]);
+        for (var x = 0; x < n; x++) {
+            array[array.length - 1].push(func(x, y));
+        }
+    }
+    return array;
 }
 
 export function toCapitalized(str:string): string {

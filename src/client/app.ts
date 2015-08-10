@@ -7,7 +7,7 @@
 // Includes
 
 import * as anyboard from "./anyboard"
-import {setupBreakthrough} from "./Breakthrough";
+import {setupUiAndGame} from "./Breakthrough";
 
 declare var EmberSockets; // No DefinitelyTyped for ember-sockets, it seems.
 
@@ -53,7 +53,7 @@ Boarders.IndexController = Ember.Controller.extend(<CoreObjectArguments> {
 Boarders.IndexView = Ember.View.extend(<CoreObjectArguments>{
     didInsertElement: () => {
         $(".Breakthrough-container").each(function() {
-            return setupBreakthrough($(this));
+            return setupUiAndGame($(this));
         })
     }
 });

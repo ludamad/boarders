@@ -1,6 +1,6 @@
 /// <reference path="../DefinitelyTyped/jquery/jquery.d.ts"/>
 
-import {gridWithValueNByMTimes} from "./common";
+import {gridWithValueNByMTimes} from "../common/common";
 import * as boarders from "./boarders";
 
 // Imports:
@@ -261,8 +261,6 @@ export class HtmlPlayArea {
         this.pInfoBlocks = [];
         this.pInfoBlocks.push(new HtmlPlayerInfoBlock("ludamad", "white", 50));
         this.pInfoBlocks.push(new HtmlPlayerInfoBlock("not ludamad", "black", 50));
-        //uiStateMachine = playAreaUiStateMachine(@)
-        //uiStateMachine.addUiTrigger
         for (var info of this.pInfoBlocks) {
             this.elem.find("#timers").append(info.elem);
         }

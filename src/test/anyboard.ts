@@ -20,10 +20,10 @@ describe('mocha tests', function () {
     });
     // JSDom setup:
     it('tests boarders.Rules setup for Breakthrough', () => {
-        let rules = Breakthrough.createRules();
+        let rules = Breakthrough.rules;
         let game = new boarders.GameState(rules);
         assert.equal(rules.cellList().length, 64);
-        assert.equal(rules._initialEnumPieces.length, 64)
+        assert.equal(rules._initialState._enumPieces.length, 64)
         let board = game.setupHtml($("<div>"));
         
         let nCells = 0;
@@ -35,7 +35,7 @@ describe('mocha tests', function () {
 
         // Check that the rule representation has the correct number of pieces.
         let numPieces = 0;
-        for (let piece of rules._initialEnumPieces) {
+        for (let piece of rules._initialState._enumPieces) {
             if (piece > -1) {
                 numPieces++;
             }

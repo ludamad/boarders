@@ -25,11 +25,9 @@
     ],
     "files": [
         "./client/Breakthrough.ts",
-        "./client/TicTacToe.ts",
         "./client/anyboard.ts",
         "./client/app.ts",
         "./client/boarders.ts",
-        "./client/common.ts",
         "./client/ember-data.d.ts",
         "./client/jmarine/ai-spawn.ts",
         "./client/loader.ts",
