@@ -1,4 +1,4 @@
-import {Rules, Piece, GameState}  from "./boarders";
+import {Rules, Piece, GameState, GraphNode}  from "./boarders";
 import {runEnginePlayer, stopEnginePlayer} from "./jmarine/ai-spawn";
 
 // More or less takes control of the game and UI logic.
@@ -19,13 +19,13 @@ rules.boardSetup(pawn, whitePlayer, "a2 b2 c2 d2 e2 f2 g2 h2".split(" "));
 rules.boardSetup(pawn, blackPlayer, "a7 b7 c7 d7 e7 f7 g7 h7".split(" "));
 rules.boardSetup(pawn, blackPlayer, "a8 b8 c8 d8 e8 f8 g8 h8".split(" "));
 
-var forwardLeft  = rules.direction(board, -1, 1);
-var forward      = rules.direction(board, 0, 1);
-var forwardRight = rules.direction(board, 1, 1);
+var forwardLeft   = board.direction(-1, 1);
+var forward       = board.direction(0, 1);
+var forwardRight  = board.direction(1, 1);
 
-var backwardLeft  = rules.direction(board, -1, -1);
-var backward      = rules.direction(board, 0, -1);
-var backwardRight = rules.direction(board, 1, -1);
+var backwardLeft  = board.direction(-1, -1);
+var backward      = board.direction(0, -1);
+var backwardRight = board.direction(1, -1);
 
 var MOVE_DIRECTIONS = [
     {
@@ -43,12 +43,12 @@ var MOVE_DIRECTIONS = [
     }
 ];
 
-function validCells(game, cell) {
+function validCells(game:GameState, cell:GraphNode) {
     var player = game.currentPlayer();
     var cells = [];
     if (game.hasPiece(cell) != null && game.getPieceOwner(cell) === player) {
         for (var dir of MOVE_DIRECTIONS) {
-            var next = cell.next(dir[player]);
+            var next = cell.next(dir[player.id]);
             if (next == null) {
                 // Invalid: Direction not defined here
                 continue;
@@ -78,7 +78,7 @@ var ai = rules.playerAi("Easy");
 ai.thinkFunction((game:GameState, onFinishThinking) => {
     // Interface with jmarine's AI:
     let contents = ["Breakthrough:"];
-    if (game.currentPlayer() === "white") {
+    if (game.currentPlayer() === whitePlayer) {
         contents.push("1");
     } else {
         contents.push("2");
@@ -109,8 +109,8 @@ export function setupUi(game:GameState, elem:JQuery) {
                 return;
             }
             var from = move.substring(0, 2), to = move.substring(2, 4);
-            var fromCell = game.rules().getCell(from);
-            var toCell = game.rules().getCell(to);
+            var fromCell = game.rules.getCell(from);
+            var toCell = game.rules.getCell(to);
             game.movePiece(fromCell, toCell);
             game.endTurn();
         });

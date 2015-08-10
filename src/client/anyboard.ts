@@ -161,9 +161,9 @@ export class HtmlBoard {
     public orientation:string;
     public grid:boarders.Grid;
     
-    constructor(public boardId:number, public width:number, public height:number) {
+    constructor(public boardId:string, public width:number, public height:number) {
         this.orientation = "black";
-        this.elem = $("#" + this.boardId);  //' + @boardId)
+        this.elem = $("#" + this.boardId);
         this.sqrWidth = this.elem.width() / this.width;
         this.sqrHeight = this.sqrWidth;  // Square squares for now. Makes sense.
         this.cells = gridWithValueNByMTimes(null, width, height);
@@ -171,19 +171,19 @@ export class HtmlBoard {
     }   
 
     public getCellFromCell(cell:boarders.GraphNode):HtmlCell {
-        return this.getCell(cell.x, cell.y);
+        return this.getByXY(cell.x, cell.y);
     }
 
     public getPiece(x, y):HtmlPiece {
-        return this.getCell(x, y).piece();
+        return this.getByXY(x, y).piece();
     }
 
     public setPiece(x, y, piece):void {
-        this.getCell(x, y).piece(piece);
+        this.getByXY(x, y).piece(piece);
     }
 
     public movePiece(x1:number, y1:number, x2:number, y2:number):void {
-        this.getCell(x1, y1).movePiece(this.getCell(x2, y2));
+        this.getByXY(x1, y1).movePiece(this.getByXY(x2, y2));
     }
 
     public setup():void {
@@ -222,7 +222,7 @@ export class HtmlBoard {
         return function() {
             var x = parseInt($(this).attr("data-x"));
             var y = parseInt($(this).attr("data-y"));
-            var cell = self.getCell(x, y);
+            var cell = self.getByXY(x, y);
             f(self, cell);
         };
     }
@@ -232,13 +232,12 @@ export class HtmlBoard {
     }
 
     public onCellHover(startHoverF:BoardCallback, endHoverF:BoardCallback) {
-        var endHoverDom, startHoverDom;
-        startHoverDom = this._createDomCallbackFromCellFunc(startHoverF);
-        endHoverDom = this._createDomCallbackFromCellFunc(endHoverF);
+        var startHoverDom = this._createDomCallbackFromCellFunc(startHoverF);
+        var endHoverDom = this._createDomCallbackFromCellFunc(endHoverF);
         this.elem.find("." + _CSS.square).hover(startHoverDom, endHoverDom);
     }
 
-    public getCell(x:number, y:number) : HtmlCell {
+    public getByXY(x:number, y:number) : HtmlCell {
         return this.cells[y][x];
     }
 }
@@ -266,7 +265,7 @@ export class HtmlPlayArea {
         }
     }
 
-    public board(id:number, w:number, h:number): HtmlBoard {
+    public board(id:string, w:number, h:number): HtmlBoard {
         var board = new HtmlBoard(id, w, h);
         this.boards.push(board);
         return board;

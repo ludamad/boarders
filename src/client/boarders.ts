@@ -53,36 +53,43 @@ class Enumerator<T extends RuleComponent> {
 
 // This is user facing code, use getters and underscored members:
 export class GraphNode extends RuleComponent {
-    _directions = {};
     uiCell:anyboard.HtmlCell = null;
     constructor(rules:Rules, public id, public parent, public x:number, public y:number) {
         super(rules);
         rules.enums.graphNodes.add(this)
     }
 
-    public next(dir, val : GraphNode = this._directions[dir]) {
-        this._directions[dir] = val;
-        return this._directions[dir];
+    public next(dir:Direction): GraphNode {
+        var nextEnumId = dir.next[this.enumId];
+        if (nextEnumId == null) return null;
+        return this.rules.enums.getGraphNode(nextEnumId);
+    }
+    public prev(dir:Direction): GraphNode {
+        var prevEnumId = dir.next[this.enumId];
+        if (prevEnumId == null) return null;
+        return this.rules.enums.getGraphNode(prevEnumId);
     }
 }
 
 // This is user facing code, use getters and underscored members:
 export abstract class Graph extends RuleComponent {
-    _directions = {};
-
-    // Enumeration refers to turning data about cells into 
-    // a bunch of indices:
-
-    public _enumerateDir(enumerator, dir) {
-        this._directions[dir] = arrayWithValueNTimes(-1, enumerator.total());
-        for (var cell of this.cellList()) {
-            this._directions[dir][cell.enumId] = cell.next(dir).enumId;
-        }
+    constructor(rules:Rules) {
+        super(rules);
+        rules.enums.graphs.add(this);
     }
-
     public cellList(): GraphNode[] {
         throw new Error("Abstract method called!");
     }  
+    public getById(id:string):GraphNode {
+        throw new Error("Abstract method called!");
+    }
+}
+
+export class Direction extends RuleComponent {
+    constructor(public rules:Rules, public prev : number[], public next:number[]) {
+        super(rules);
+        rules.enums.directions.add(this);
+    }
 }
 
 // This is user facing code, use getters and underscored members:
@@ -98,17 +105,16 @@ export class Grid extends Graph {
         );
     }
 
-    public direction(name, dx, dy) {
-        for (var cell of this.rules.cellList()) {
-            cell.next(name, null);
-        }
-        mapNByM(this.width, this.height, (x, y) => {
-            // Set the cell's linked cell for this name
-            if (this.getCell(x + dx, y + dy) != null) {
-                // Set the cell's linked cell for this name
-                this.getCell(x, y).next(name, this.getCell(x + dx, y + dy));
-            }
+    public direction(dx:number, dy:number):Direction {
+        var prevCellGrid = mapNByM(this.width, this.height, (x, y) => {
+            var prevCell = this.getByXY(x - dx, y - dy);
+            return prevCell ? prevCell.enumId : null;
         });
+        var nextCellGrid = mapNByM(this.width, this.height, (x, y) => {
+            var nextCell = this.getByXY(x + dx, y + dy);
+            return nextCell ? nextCell.enumId : null;
+        });
+        return new Direction(this.rules, [].concat(...prevCellGrid), [].concat(...nextCellGrid));
     }
 
     public cellList():GraphNode[] {
@@ -121,15 +127,14 @@ export class Grid extends Graph {
         return list;
     }
 
-    public getCell(id:number|string, yIfIdIsX?:number):GraphNode {
-        // Case 1: getCell(x, y)
-        if (typeof id === "number") {
-            if (this._cells[yIfIdIsX] == null) {
-                return null;
-            }
-            return this._cells[yIfIdIsX][id];
+    public getByXY(x:number, y:number):GraphNode {
+        if (this._cells[y] == null) {
+            return null;
         }
-        // Case 2: getCell(id)
+        return this._cells[y][x];
+    }
+
+    public getById(id:string):GraphNode {
         for (var row of this._cells) {
             for (var cell of row) {
                 if (cell.id === id) {
@@ -142,16 +147,10 @@ export class Grid extends Graph {
 }
 
 // This is user facing code, use getters and underscored members:
-export class SlideMove {
-    constructor(public _fromCell   :GraphNode, 
-                public _toCell     :GraphNode, 
-                public _dragTrigger:boolean = false) {}
-}
-
-// This is user facing code, use getters and underscored members:
 export class Player extends RuleComponent {
     constructor(rules:Rules, public id:string) {
         super(rules);
+        rules.enums.players.add(this);
     }
 }
 
@@ -160,6 +159,7 @@ export class Piece extends RuleComponent {
     images = {};
     constructor(rules:Rules, public id:string) {
         super(rules);
+        rules.enums.pieces.add(this);
     }
 
     public setImage(players:Player|Player[], img?): void{
@@ -183,22 +183,14 @@ export class GameState {
     _enumPieces:number[];
     _playArea:anyboard.HtmlPlayArea = null;
 
-    constructor(public _rules:Rules) {
-        this._enumOwners = _rules._initialState._enumOwners.map((copy) => copy);
-        this._enumPieces = _rules._initialState._enumPieces.map((copy) => copy);
+    constructor(public rules:Rules) {
+        this._enumOwners = rules._initialState._enumOwners.map((copy) => copy);
+        this._enumPieces = rules._initialState._enumPieces.map((copy) => copy);
     }
 
-    public currentPlayerNum(_currentPlayerNum : any = this._currentPlayerNum) {
-        this._currentPlayerNum = _currentPlayerNum != null ? _currentPlayerNum : this._currentPlayerNum;
-        return this._currentPlayerNum;
-    }
 
-    public currentPlayer():string {
-        return this._rules._players[this._currentPlayerNum].id;
-    }
-
-    public rules():Rules{
-        return this._rules;
+    public currentPlayer():Player {
+        return this.rules.enums.getPlayer(this._currentPlayerNum);
     }
 
     public setPiece(cell, player, piece):void {
@@ -206,20 +198,20 @@ export class GameState {
         this._enumPieces[cell.enumId] = piece.enumId;
     }
 
-    public getPieceOwner(cell) {
-        return this._rules._players[this._enumOwners[cell.enumId]].id;
+    public getPieceOwner(cell):Player {
+        return this.rules.enums.getPlayer(this._enumOwners[cell.enumId]);
     }
 
     public hasPiece(cell) {
         return this.getPieceType(cell) != null;
     }
 
-    public getPieceType(cell) {
+    public getPieceType(cell):Piece {
         var eId = this._enumPieces[cell.enumId];
         if (eId === -1) {
             return null;
         }
-        return this._rules._players[eId];
+        return this.rules.enums.getPiece(eId);
     }
 
     public movePiece(cell1, cell2) {
@@ -235,17 +227,15 @@ export class GameState {
     public pieces():PieceInfo[] {
         var pieces:PieceInfo[] = [];
         for (var i = 0; i < this._enumOwners.length; i++) {
-            var owner = this._rules._players[this._enumOwners[i]];
+            var owner = this.rules.enums.getPlayer(this._enumOwners[i]);
             var typeEnum = this._enumPieces[i];
             if (typeEnum == -1) {
                 pieces.push(null);
             } else {
-                var cell = this._rules.cellList()[i];
-                pieces.push({
-                    owner,
-                    type: this._rules._pieces[typeEnum], 
-                    x: cell.x, 
-                    y: cell.y
+                var cell = this.rules.cellList()[i];
+                pieces.push({owner,
+                    type: this.rules.enums.getPiece(typeEnum), 
+                    x: cell.x, y: cell.y
                 });
             }
         }
@@ -254,18 +244,18 @@ export class GameState {
 
     public setupHtml(container:JQuery):anyboard.HtmlPlayArea {
         this._playArea = new anyboard.HtmlPlayArea(container);
-        for (var grid of this._rules.grids()) {
-            grid._board = this._playArea.board(grid.enumId, grid.width, grid.height);
+        for (var grid of this.rules.grids()) {
+            grid._board = this._playArea.board(`board-${grid.enumId+1}`, grid.width, grid.height);
         }
         this._playArea.setup();
 
         // Link the representations for easy end-user manipulation:
-        for (var grid of this._rules.grids()) {
+        for (var grid of this.rules.grids()) {
             grid._board.grid = grid;
             for (var y = 0; y < grid.height; y++) {
                 for (var x = 0; x < grid.width; x++) {
-                    grid._board.getCell(x,y).gridCell = grid.getCell(x,y);
-                    grid.getCell(x,y).uiCell = grid._board.getCell(x,y);
+                    grid._board.getByXY(x,y).gridCell = grid.getByXY(x,y);
+                    grid.getByXY(x,y).uiCell = grid._board.getByXY(x,y);
                 }
             }
         }
@@ -274,23 +264,20 @@ export class GameState {
     }
 
     public endTurn():void {
-        this._currentPlayerNum++;
-        if (this._currentPlayerNum >= this._rules._players.length) {
-            this._currentPlayerNum -= this._rules._players.length;
-        }
+        this._currentPlayerNum = (this._currentPlayerNum+1) % this.rules.enums.players.total();
         this.syncPieces();
     }
 
     public syncPieces():void {
-        for (var cell of this._rules.cellList()) {
+        for (var cell of this.rules.cellList()) {
             var enumPiece = this._enumPieces[cell.enumId];
             var enumOwner = this._enumOwners[cell.enumId];
             if (enumPiece === -1) {
                 cell.uiCell.piece(null);
                 continue;
             }
-            var owner = this._rules._players[enumOwner].id;
-            var piece = this._rules._pieces[enumPiece];
+            var owner = this.rules.enums.getPlayer(enumOwner).id;
+            var piece = this.rules.enums.getPiece(enumPiece);
             var img = piece.images[owner];
             var htmlPiece = cell.uiCell.piece();
             // Avoid creating a new image element if necessary, slight gain:
@@ -351,9 +338,26 @@ class PlayerAi {
 
 export class Enumerators {
     graphs = new Enumerator<Graph>();
+    directions = new Enumerator<Direction>();
     graphNodes = new Enumerator<GraphNode>();
     players = new Enumerator<Player>();
     pieces = new Enumerator<Piece>();
+
+    getGraph(enumId:number):Graph {
+        return this.graphs.list[enumId];
+    }
+    getDirection(enumId:number):Direction {
+        return this.directions.list[enumId];
+    }
+    getGraphNode(enumId:number):GraphNode {
+        return this.graphNodes.list[enumId];
+    }
+    getPlayer(enumId:number):Player {
+        return this.players.list[enumId];
+    }
+    getPiece(enumId:number):Piece {
+        return this.pieces.list[enumId];
+    }
 }
 
 export class Options {
@@ -371,15 +375,11 @@ export class InitialState {
 export class Rules {
     enums = new Enumerators();
     private _playerAis = [];
-    _players:Player[] = [];
-    private _grids:Grid[] = [];
     private _turnsCanPass:boolean = false;
-    private _stacks = [];
-    _pieces:Piece[] = [];
     _initialState = new InitialState();
     private _finalized = false;
 
-    public direction(grid, dx, dy) {
+    public direction(grid:Grid, dx:number, dy:number) {
         return grid.direction(dx, dy);
     }
 
@@ -430,36 +430,32 @@ export class Rules {
 
     public piece(id) {
         this._ensureNotFinalized();
-        var piece = new Piece(this, id);
-        piece.enumId = this._pieces.length;
-        this._pieces.push(piece);
-        return piece;
+        return new Piece(this, id);
     }
 
     public player(id:string) {
         this._ensureNotFinalized();
-        var player = new Player(this, id);
-        player.enumId = this._players.length;
-        this._players.push(player);
-        return player;
+        return new Player(this, id);
     }
 
     public grid(w:number, h:number, cellNameCallback: (x:number, y:number)=>string) {
         this._ensureNotFinalized();
-        var grid = new Grid(this, w, h, cellNameCallback);
-        this._grids.push(grid);
-        return grid;
+        return new Grid(this, w, h, cellNameCallback);
     }
 
     public grids():Grid[] {
-        return this._grids;
+        var ret:Grid[] = [];
+        for (var graph of this.enums.graphs.list) {
+            if (graph instanceof Grid) ret.push(graph);
+        }
+        return ret;
     }
 
     // Mmm boilerplate.
 
     public getCell(id):GraphNode {
-        for (var grid of this._grids) {
-            var cell = grid.getCell(id);
+        for (var graph of this.enums.graphs.list) {
+            var cell = graph.getById(id);
             if (cell != null) {
                 return cell;
             }
